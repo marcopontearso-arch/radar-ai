@@ -192,10 +192,48 @@ async function fetchBAA(){
 
 // ── DXY — Binance + Alpha Vantage forex ──────
 async function fetchDXY(){
-  setProgress(35,'DXY da macrosignal.uk...');
-  return fetchWorkerCSV('dxy');
-}
+  setProgress(35,'DXY — EUR/GBP da Binance...');
+  const [eurArr, gbpArr] = await Promise.all([
+    fetch('https://api.binance.com/api/v3/klines?symbol=EURUSDT&interval=1d&limit=1500').then(r=>r.json()),
+    fetch('https://api.binance.com/api/v3/klines?symbol=GBPUSDT&interval=1d&limit=1500').then(r=>r.json()),
+  ]);
+  const eurMap={}, gbpMap={};
+  eurArr.forEach(k=>{eurMap[new Date(k[0]).toISOString().slice(0,10)]=parseFloat(k[4]);});
+  gbpArr.forEach(k=>{gbpMap[new Date(k[0]).toISOString().slice(0,10)]=parseFloat(k[4]);});
 
+  setProgress(55,'DXY — JPY/CAD/CHF/SEK dal Worker...');
+  const [jpyMap, cadMap, chfMap, sekMap] = await Promise.all([
+    fetchWorkerCSV('jpy'),
+    fetchWorkerCSV('cad'),
+    fetchWorkerCSV('chf'),
+    fetchWorkerCSV('sek'),
+  ]);
+
+  setProgress(72,'Calcolo DXY formula ICE...');
+  // Formula ICE ufficiale:
+  // DXY = 50.14348112 × EURUSD^-0.576 × USDJPY^0.136 × GBPUSD^-0.119 × USDCAD^0.091 × USDSEK^0.042 × USDCHF^0.036
+  const dxyMap={};
+  let lE=null,lG=null,lJ=null,lC=null,lCH=null,lS=null;
+  const allDates=[...new Set([...Object.keys(eurMap),...Object.keys(jpyMap)])].sort();
+  for(const d of allDates){
+    if(eurMap[d]) lE=eurMap[d];
+    if(gbpMap[d]) lG=gbpMap[d];
+    if(jpyMap[d]) lJ=jpyMap[d];
+    if(cadMap[d]) lC=cadMap[d];
+    if(chfMap[d]) lCH=chfMap[d];
+    if(sekMap[d]) lS=sekMap[d];
+    if(!lE||!lG||!lJ||!lC||!lCH||!lS) continue;
+    dxyMap[d]=50.14348112
+      *Math.pow(lE,-0.576)
+      *Math.pow(lJ,0.136)
+      *Math.pow(lG,-0.119)
+      *Math.pow(lC,0.091)
+      *Math.pow(lS,0.042)
+      *Math.pow(lCH,0.036);
+  }
+  if(!Object.keys(dxyMap).length) throw new Error('DXY: nessun dato calcolato');
+  return dxyMap;
+}
 
 // ── Merge ─────────────────────────────────────
 function mergeData(btcArr,baaMap,dxyMap){
