@@ -212,10 +212,20 @@ async function fetchBAA() {
   setProgress(20,'BAA10Y da FRED via proxy...');
   // corsproxy.io: free, works from GitHub Pages (HTTPS), no account needed
   const fredUrl = 'https://fred.stlouisfed.org/graph/fredgraph.csv?id=BAA10Y';
-  const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(fredUrl);
-  const r = await fetch(proxyUrl);
-  if(!r.ok) throw new Error('BAA10Y proxy HTTP '+r.status);
-  const text = await r.text();
+  // Try multiple proxies in sequence
+  const proxies = [
+    'https://api.allorigins.win/raw?url=' + encodeURIComponent(fredUrl),
+    'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(fredUrl),
+    'https://corsproxy.io/?' + encodeURIComponent(fredUrl),
+  ];
+  let text = null;
+  for(const url of proxies) {
+    try {
+      const r = await fetch(url);
+      if(r.ok) { text = await r.text(); break; }
+    } catch(_) {}
+  }
+  if(!text) throw new Error('BAA10Y: tutti i proxy hanno fallito');
   const lines = text.trim().split('\n').slice(1);
   const map = {};
   lines.forEach(l => {
