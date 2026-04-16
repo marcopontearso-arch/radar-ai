@@ -212,10 +212,11 @@ function detectRegime(signal, mean, stdDev) {
 
 function updateRegime(data) {
   if(!data.length) return;
-  const signals = data.map(d => d.signal);
+  // Always use ALL historical data for regime reference
+  const signals = allData.map(d => d.signal);
   const mean = signals.reduce((a,b)=>a+b,0) / signals.length;
   const stdDev = Math.sqrt(signals.map(s=>(s-mean)**2).reduce((a,b)=>a+b,0)/signals.length);
-  const last = data[data.length-1];
+  const last = allData[allData.length-1];
   const regime = detectRegime(last.signal, mean, stdDev);
 
   const banner = document.getElementById('regime-banner');
@@ -325,10 +326,11 @@ function buildOrUpdate(data){
   const labels=data.map(d=>d.date), signals=data.map(d=>d.signal);
   const ctx=document.getElementById('radarChart').getContext('2d');
 
-  // Dynamic gradient based on regime
-  const mean = signals.reduce((a,b)=>a+b,0)/signals.length;
-  const lastSig = signals[signals.length-1];
-  const stdDev = Math.sqrt(signals.map(s=>(s-mean)**2).reduce((a,b)=>a+b,0)/signals.length);
+  // Always use GLOBAL regime (allData), not filtered period
+  const globalSignals = allData.map(d=>d.signal);
+  const mean = globalSignals.reduce((a,b)=>a+b,0)/globalSignals.length;
+  const lastSig = globalSignals[globalSignals.length-1];
+  const stdDev = Math.sqrt(globalSignals.map(s=>(s-mean)**2).reduce((a,b)=>a+b,0)/globalSignals.length);
   const regime = detectRegime(lastSig, mean, stdDev);
 
   const gradColors = {
