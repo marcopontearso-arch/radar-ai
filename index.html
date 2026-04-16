@@ -167,17 +167,25 @@ async function fetchBTC(){
   return (await r.json()).map(k=>({date:new Date(k[0]).toISOString().slice(0,10),btc:parseFloat(k[4])}));
 }
 
-// ── BAA10Y — Cloudflare Worker proxy ─────────
+// ── Worker CSV parser ────────────────────────
+async function fetchWorkerCSV(pair){
+  const r = await fetch('https://macrosignal.uk?pair=' + pair);
+  if(!r.ok) throw new Error('Worker ' + pair + ' HTTP ' + r.status);
+  const text = await r.text();
+  const map = {};
+  text.trim().split(String.fromCharCode(10)).slice(1).forEach(l => {
+    const cols = l.split(',');
+    const date = cols[0]?.trim();
+    const v = parseFloat(cols[1]);
+    if(date && date.length===10 && !isNaN(v)) map[date] = v;
+  });
+  return map;
+}
+
+// ── BAA10Y — Cloudflare Worker ────────────────
 async function fetchBAA(){
   setProgress(15,'BAA10Y da macrosignal.uk...');
-  const r = await fetch('https://macrosignal.uk');
-  if(!r.ok) throw new Error('BAA10Y Worker HTTP '+r.status);
-  const j = await r.json();
-  const map = {};
-  j.observations.forEach(o => {
-    const v = parseFloat(o.value);
-    if(o.date && !isNaN(v)) map[o.date] = v;
-  });
+  const map = await fetchWorkerCSV('baa');
   if(!Object.keys(map).length) throw new Error('BAA10Y: nessun dato ricevuto');
   return map;
 }
@@ -195,22 +203,13 @@ async function fetchDXY(){
 
   setProgress(55,'DXY — JPY/CAD/CHF/SEK da Alpha Vantage...');
   // AV FX_DAILY: full history, CORS nativo
-  async function avFX(from,to){
-    const r=await fetch(`https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=${from}&to_symbol=${to}&outputsize=full&apikey=${AV_KEY}`);
-    if(!r.ok) return {};
-    const j=await r.json();
-    if(j['Error Message']||j['Note']) return {};
-    const series=j['Time Series FX (Daily)']||{};
-    const m={};
-    Object.entries(series).forEach(([d,v])=>{m[d]=parseFloat(v['4. close']);});
-    return m;
-  }
-
-  // Sequential to avoid AV rate limit (5 calls/min free tier)
-  const jpyMap = await avFX('USD','JPY');
-  const cadMap = await avFX('USD','CAD');
-  const chfMap = await avFX('USD','CHF');
-  const sekMap = await avFX('USD','SEK');
+  // JPY, CAD, CHF, SEK from Worker (FRED DEXJPUS, DEXCAUS, DEXSZUS, DEXSDUS)
+  const [jpyMap, cadMap, chfMap, sekMap] = await Promise.all([
+    fetchWorkerCSV('jpy'),
+    fetchWorkerCSV('cad'),
+    fetchWorkerCSV('chf'),
+    fetchWorkerCSV('sek'),
+  ]);
 
   setProgress(75,'Calcolo DXY formula ICE...');
   // DXY = 50.14348112 × EUR^-0.576 × JPY^0.136 × GBP^-0.119 × CAD^0.091 × SEK^0.042 × CHF^0.036
@@ -330,4 +329,3 @@ loadData();
 </script>
 </body>
 </html>
-
