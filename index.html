@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radar AI — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+  :root {
+    --bg:#080b12; --bg2:#0d1220; --bg3:#111827;
+    --border:rgba(99,120,255,0.18); --border2:rgba(99,120,255,0.38);
+    --a1:#6378ff; --a2:#a855f7; --a3:#22d3ee;
+    --text:#e8eaff; --muted:#6b7280;
+  }
+  body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; min-height:100vh; overflow-x:hidden; }
+  body::before { content:''; position:fixed; top:-30%; left:-20%; width:70%; height:70%; background:radial-gradient(ellipse,rgba(99,120,255,0.07) 0%,transparent 70%); pointer-events:none; z-index:0; }
+  body::after  { content:''; position:fixed; bottom:-20%; right:-10%; width:60%; height:60%; background:radial-gradient(ellipse,rgba(168,85,247,0.06) 0%,transparent 70%); pointer-events:none; z-index:0; }
+  .wrapper { position:relative; z-index:1; max-width:1400px; margin:0 auto; padding:2rem 2rem 3rem; }
+
+  header { display:flex; align-items:center; justify-content:space-between; margin-bottom:2.5rem; padding-bottom:1.5rem; border-bottom:1px solid var(--border); }
+  .logo-area { display:flex; align-items:center; gap:1rem; }
+  .logo-icon { width:50px; height:50px; border-radius:14px; background:linear-gradient(135deg,var(--a1),var(--a2)); display:flex; align-items:center; justify-content:center; box-shadow:0 0 28px rgba(99,120,255,0.3),0 0 56px rgba(168,85,247,0.2); flex-shrink:0; }
+  .logo-icon svg { width:28px; height:28px; }
+  .logo-text h1 { font-size:1.6rem; font-weight:800; letter-spacing:0.05em; background:linear-gradient(90deg,#e8eaff 0%,var(--a1) 50%,var(--a2) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; line-height:1.1; }
+  .logo-text span { font-family:'Space Mono',monospace; font-size:0.63rem; color:var(--a1); letter-spacing:0.14em; opacity:0.75; text-transform:uppercase; }
+  .live-badge { display:flex; align-items:center; gap:7px; background:rgba(34,211,238,0.07); border:1px solid rgba(34,211,238,0.22); border-radius:99px; padding:6px 16px; font-family:'Space Mono',monospace; font-size:0.67rem; color:var(--a3); letter-spacing:0.1em; }
+  .live-dot { width:7px; height:7px; border-radius:50%; background:var(--a3); box-shadow:0 0 8px var(--a3); animation:blink 1.6s ease-in-out infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+
+  /* SETUP */
+  .setup-card { background:var(--bg2); border:1px solid rgba(99,120,255,0.35); border-radius:14px; padding:1.5rem 1.75rem; margin-bottom:1.5rem; position:relative; overflow:hidden; }
+  .setup-card::before { content:''; position:absolute; inset:0; background:linear-gradient(90deg,rgba(99,120,255,0.06) 0%,transparent 60%); pointer-events:none; }
+  .setup-title { font-size:0.95rem; font-weight:600; color:var(--text); margin-bottom:6px; }
+  .setup-desc  { font-family:'Space Mono',monospace; font-size:0.65rem; color:var(--muted); line-height:1.9; margin-bottom:1rem; }
+  .setup-desc a { color:var(--a1); }
+  .setup-row   { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .key-input { flex:1; min-width:220px; background:var(--bg3); border:1px solid var(--border2); border-radius:8px; padding:9px 14px; color:var(--text); font-family:'Space Mono',monospace; font-size:0.75rem; letter-spacing:0.05em; outline:none; transition:border-color 0.2s; }
+  .key-input:focus { border-color:var(--a1); }
+  .key-input::placeholder { color:var(--muted); }
+  .key-btn { background:linear-gradient(135deg,var(--a1),var(--a2)); border:none; border-radius:8px; padding:9px 20px; color:#fff; font-family:'Space Mono',monospace; font-size:0.72rem; letter-spacing:0.06em; cursor:pointer; white-space:nowrap; transition:opacity 0.15s; }
+  .key-btn:hover { opacity:0.85; }
+  .setup-note { font-family:'Space Mono',monospace; font-size:0.6rem; color:var(--muted); margin-top:0.75rem; border-top:1px solid var(--border); padding-top:0.75rem; line-height:1.8; }
+  .setup-note span { color:var(--a3); }
+  .hidden { display:none !important; }
+
+  /* FORMULA */
+  .formula-banner { background:var(--bg2); border:1px solid var(--border); border-radius:14px; padding:1.25rem 1.75rem; margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; position:relative; overflow:hidden; }
+  .formula-banner::before { content:''; position:absolute; inset:0; background:linear-gradient(90deg,rgba(99,120,255,0.05) 0%,transparent 60%); pointer-events:none; }
+  .formula-label { font-family:'Space Mono',monospace; font-size:0.62rem; color:var(--muted); letter-spacing:0.13em; text-transform:uppercase; margin-bottom:5px; }
+  .formula-expr  { font-family:'Space Mono',monospace; font-size:1.15rem; font-weight:700; letter-spacing:0.04em; }
+  .op{color:var(--a2);} .v1{color:var(--a1);} .v2{color:#f59e0b;} .v3{color:var(--a3);}
+  .formula-components { display:flex; gap:2rem; flex-wrap:wrap; }
+  .comp { display:flex; flex-direction:column; align-items:flex-end; }
+  .comp-label { font-family:'Space Mono',monospace; font-size:0.57rem; letter-spacing:0.1em; color:var(--muted); text-transform:uppercase; margin-bottom:2px; }
+  .comp-name  { font-family:'Space Mono',monospace; font-size:0.78rem; font-weight:700; }
+  .comp-name.c1{color:var(--a1);} .comp-name.c2{color:#f59e0b;} .comp-name.c3{color:var(--a3);}
+
+  /* STATS */
+  .stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1rem; margin-bottom:1.5rem; }
+  .stat-card { background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:1rem 1.2rem; transition:border-color 0.2s; }
+  .stat-card:hover { border-color:var(--border2); }
+  .s-label { font-family:'Space Mono',monospace; font-size:0.58rem; color:var(--muted); letter-spacing:0.13em; text-transform:uppercase; margin-bottom:7px; }
+  .s-val   { font-family:'Space Mono',monospace; font-size:1.25rem; font-weight:700; line-height:1; }
+  .s-sub   { font-family:'Space Mono',monospace; font-size:0.6rem; color:var(--muted); margin-top:4px; }
+
+  /* CHART */
+  .chart-wrap { background:var(--bg2); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+  .chart-header { padding:1.1rem 1.5rem; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem; }
+  .chart-title { font-size:0.88rem; font-weight:600; color:var(--text); }
+  .chart-sub   { font-family:'Space Mono',monospace; font-size:0.58rem; color:var(--muted); margin-top:3px; letter-spacing:0.08em; }
+  .tf-buttons  { display:flex; gap:4px; flex-wrap:wrap; }
+  .tf-btn { background:transparent; border:1px solid var(--border); border-radius:6px; color:var(--muted); font-family:'Space Mono',monospace; font-size:0.62rem; padding:5px 11px; cursor:pointer; letter-spacing:0.06em; transition:all 0.15s; }
+  .tf-btn:hover,.tf-btn.active { background:rgba(99,120,255,0.12); border-color:var(--a1); color:var(--a1); }
+  .chart-body { padding:1.5rem; position:relative; }
+  .chart-canvas-wrap { position:relative; height:420px; }
+  .status-overlay { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0.75rem; background:var(--bg2); border-radius:8px; z-index:10; }
+  .spinner { width:32px; height:32px; border:2px solid rgba(99,120,255,0.15); border-top-color:var(--a1); border-radius:50%; animation:spin 0.8s linear infinite; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+  .status-msg { font-family:'Space Mono',monospace; font-size:0.68rem; color:var(--muted); letter-spacing:0.06em; text-align:center; line-height:1.9; max-width:460px; padding:0 1rem; }
+  .progress-bar-wrap { width:220px; height:3px; background:rgba(99,120,255,0.12); border-radius:99px; overflow:hidden; }
+  .progress-bar { height:100%; border-radius:99px; background:linear-gradient(90deg,var(--a1),var(--a2)); transition:width 0.4s ease; }
+  .action-btn { margin-top:4px; background:transparent; border:1px solid var(--border2); border-radius:8px; color:var(--a1); font-family:'Space Mono',monospace; font-size:0.65rem; padding:7px 18px; cursor:pointer; letter-spacing:0.08em; transition:all 0.15s; }
+  .action-btn:hover { background:rgba(99,120,255,0.12); }
+
+  footer { margin-top:1.75rem; padding-top:1.25rem; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem; }
+  footer p    { font-family:'Space Mono',monospace; font-size:0.6rem; color:var(--muted); letter-spacing:0.07em; }
+  .ft-formula { font-family:'Space Mono',monospace; font-size:0.6rem; color:var(--a1); letter-spacing:0.07em; opacity:0.65; }
+
+  @media(max-width:640px){
+    .wrapper{padding:1rem 1rem 2rem;}
+    .live-badge{display:none;}
+    .formula-components{display:none;}
+    .formula-expr{font-size:0.88rem;}
+    .chart-canvas-wrap{height:300px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <header>
+    <div class="logo-area">
+      <div class="logo-icon">
+        <svg viewBox="0 0 28 28" fill="none">
+          <circle cx="14" cy="14" r="11" stroke="white" stroke-width="1" opacity="0.25"/>
+          <circle cx="14" cy="14" r="7"  stroke="white" stroke-width="1" opacity="0.4"/>
+          <circle cx="14" cy="14" r="3"  fill="white" opacity="0.9"/>
+          <line x1="14" y1="14" x2="24.5" y2="5.5" stroke="white" stroke-width="1.8" stroke-linecap="round" opacity="0.9"/>
+          <circle cx="22" cy="7" r="1.8" fill="white" opacity="0.75"/>
+        </svg>
+      </div>
+      <div class="logo-text">
+        <h1>RADAR AI</h1>
+        <span>Macro Signal Dashboard</span>
+      </div>
+    </div>
+    <div class="live-badge"><div class="live-dot"></div>LIVE DATA</div>
+  </header>
+
+  <!-- SETUP -->
+  <div class="setup-card" id="setup-card">
+    <div class="setup-title">Inserisci la tua chiave FRED</div>
+    <div class="setup-desc">
+      Usata per scaricare sia <strong style="color:var(--a1)">BAA10Y</strong> che <strong style="color:var(--a3)">DXY</strong> direttamente da FRED — nessun'altra dipendenza esterna.<br>
+      Ottienila gratis su <a href="https://fred.stlouisfed.org/docs/api/api_key.html" target="_blank">fred.stlouisfed.org</a> → My Account → API Keys.
+    </div>
+    <div class="setup-row">
+      <input class="key-input" id="fredKeyInput" type="text" placeholder="La tua FRED API key (32 caratteri)" autocomplete="off" spellcheck="false"/>
+      <button class="key-btn" onclick="startWithKey()">Carica grafico →</button>
+    </div>
+    <div class="setup-note">
+      <span>✓</span> La chiave viene salvata nel browser — non dovrai reinserirla.&nbsp;&nbsp;
+      <span>✓</span> BTC da Binance · BAA10Y e DXY da FRED API.
+    </div>
+  </div>
+
+  <!-- FORMULA -->
+  <div class="formula-banner">
+    <div>
+      <div class="formula-label">Formula</div>
+      <div class="formula-expr">
+        <span class="op">(</span><span class="v1">BAA10Y</span>
+        <span class="op"> / </span><span class="v2">BTCUSD</span><span class="op">)</span>
+        <span class="op"> × </span><span class="v3">DXY</span>
+      </div>
+    </div>
+    <div class="formula-components">
+      <div class="comp"><span class="comp-label">Credit Spread</span><span class="comp-name c1">BAA10Y</span></div>
+      <div class="comp"><span class="comp-label">Crypto</span><span class="comp-name c2">BTCUSD</span></div>
+      <div class="comp"><span class="comp-label">Dollar Index</span><span class="comp-name c3">DXY</span></div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="s-label">BAA10Y</div>
+      <div class="s-val" id="val-baa" style="color:var(--a1)">—</div>
+      <div class="s-sub">Moody's Baa Spread</div>
+    </div>
+    <div class="stat-card">
+      <div class="s-label">BTCUSD</div>
+      <div class="s-val" id="val-btc" style="color:#f59e0b">—</div>
+      <div class="s-sub">Bitcoin / USD</div>
+    </div>
+    <div class="stat-card">
+      <div class="s-label">DXY</div>
+      <div class="s-val" id="val-dxy" style="color:var(--a3)">—</div>
+      <div class="s-sub">US Dollar Index · FRED</div>
+    </div>
+    <div class="stat-card">
+      <div class="s-label">Segnale attuale</div>
+      <div class="s-val" id="val-sig" style="color:var(--text)">—</div>
+      <div class="s-sub">( BAA10Y / BTC ) × DXY</div>
+    </div>
+  </div>
+
+  <div class="chart-wrap">
+    <div class="chart-header">
+      <div>
+        <div class="chart-title">( BAA10Y / BTCUSD ) × DXY — Segnale Macro</div>
+        <div class="chart-sub" id="data-source-label">In attesa della chiave FRED...</div>
+      </div>
+      <div class="tf-buttons">
+        <button class="tf-btn" data-days="90">3M</button>
+        <button class="tf-btn active" data-days="365">1A</button>
+        <button class="tf-btn" data-days="730">2A</button>
+        <button class="tf-btn" data-days="1825">5A</button>
+        <button class="tf-btn" data-days="0">MAX</button>
+      </div>
+    </div>
+    <div class="chart-body">
+      <div class="chart-canvas-wrap">
+        <div class="status-overlay" id="overlay">
+          <div class="spinner" id="ovSpinner"></div>
+          <div class="status-msg" id="ovMsg">Inserisci la chiave FRED per iniziare.</div>
+          <div class="progress-bar-wrap"><div class="progress-bar" id="pbar" style="width:0%"></div></div>
+        </div>
+        <canvas id="radarChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>Dati: Binance (BTC) · FRED API (BAA10Y + DXY) · Solo a scopo informativo · © Radar AI</p>
+    <span class="ft-formula">(BAA10Y / BTCUSD) × DXY</span>
+  </footer>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+//  RADAR AI — tutto da FRED (BAA10Y + DXY) + Binance (BTC)
+//  DXY su FRED = serie "DTWEXBGS" (Trade Weighted USD Index)
+//  oppure "DEXUSEU" — ma usiamo DTWEXBGS che è il più vicino a DXY
+// ─────────────────────────────────────────────────────────────
+
+let allData    = [];
+let chart      = null;
+let activeDays = 365;
+let fredKey    = '';
+
+// ── Persist key ───────────────────────────────
+const SAVED = localStorage.getItem('radar_fred_key_v2');
+if(SAVED) {
+  fredKey = SAVED;
+  document.getElementById('fredKeyInput').value = SAVED;
+  document.getElementById('setup-card').classList.add('hidden');
+}
+
+function startWithKey() {
+  const k = document.getElementById('fredKeyInput').value.trim();
+  if(!k || k.length < 10) { alert('Inserisci una chiave FRED valida.'); return; }
+  fredKey = k;
+  localStorage.setItem('radar_fred_key_v2', k);
+  document.getElementById('setup-card').classList.add('hidden');
+  loadData();
+}
+
+// Enter key shortcut
+document.getElementById('fredKeyInput').addEventListener('keydown', e => {
+  if(e.key === 'Enter') startWithKey();
+});
+
+// ── UI ────────────────────────────────────────
+function setProgress(pct, msg) {
+  document.getElementById('pbar').style.width = pct + '%';
+  document.getElementById('ovMsg').textContent = msg;
+}
+function hideOverlay() {
+  document.getElementById('overlay').style.display = 'none';
+}
+function showError(msg, canChangeKey = false) {
+  document.getElementById('ovSpinner').style.display = 'none';
+  document.querySelector('.progress-bar-wrap').style.display = 'none';
+  document.getElementById('ovMsg').innerHTML =
+    `<span style="font-size:1.3rem">⚠</span><br>${msg}`;
+  const ov = document.getElementById('overlay');
+  if(!ov.querySelector('.action-btn')) {
+    const r = document.createElement('button');
+    r.className = 'action-btn';
+    r.textContent = '↺ Riprova';
+    r.onclick = () => location.reload();
+    ov.appendChild(r);
+    if(canChangeKey) {
+      const c = document.createElement('button');
+      c.className = 'action-btn';
+      c.style.marginLeft = '8px';
+      c.textContent = '✎ Cambia chiave';
+      c.onclick = () => {
+        localStorage.removeItem('radar_fred_key_v2');
+        location.reload();
+      };
+      ov.appendChild(c);
+    }
+  }
+}
+function fmt(n, dec=2) {
+  if(n == null || isNaN(n)) return '—';
+  return n.toLocaleString('it-IT', {minimumFractionDigits:dec, maximumFractionDigits:dec});
+}
+
+// ── FRED fetch helper ─────────────────────────
+async function fetchFRED(seriesId, startDate = '2012-01-01') {
+  const url = `https://api.stlouisfed.org/fred/series/observations`
+    + `?series_id=${seriesId}`
+    + `&api_key=${fredKey}`
+    + `&file_type=json`
+    + `&observation_start=${startDate}`
+    + `&sort_order=asc`;
+  const r = await fetch(url);
+  if(!r.ok) throw new Error(`FRED ${seriesId} — HTTP ${r.status}`);
+  const j = await r.json();
+  if(j.error_message) throw new Error(`FRED ${seriesId}: ${j.error_message}`);
+  return j.observations
+    .filter(o => o.value !== '.' && o.value !== '')
+    .map(o => ({ date: o.date, value: parseFloat(o.value) }));
+}
+
+// ── BTC — Binance klines (CORS ok) ───────────
+async function fetchBTC() {
+  setProgress(10, 'BTC/USD da Binance...');
+  const url = 'https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=1500';
+  const r = await fetch(url);
+  if(!r.ok) throw new Error('Binance BTC — HTTP ' + r.status);
+  const arr = await r.json();
+  return arr.map(k => ({
+    date: new Date(k[0]).toISOString().slice(0,10),
+    btc:  parseFloat(k[4])
+  }));
+}
+
+// ── BAA10Y da FRED ────────────────────────────
+async function fetchBAA() {
+  setProgress(35, 'BAA10Y da FRED...');
+  return fetchFRED('BAA10Y');
+}
+
+// ── DXY da FRED ───────────────────────────────
+// DTWEXBGS = Trade Weighted U.S. Dollar Index: Broad, Goods
+// È il proxy più corretto per DXY disponibile su FRED
+async function fetchDXY() {
+  setProgress(65, 'DXY (DTWEXBGS) da FRED...');
+  return fetchFRED('DTWEXBGS');
+}
+
+// ── Merge ─────────────────────────────────────
+function mergeData(btcArr, baaArr, dxyArr) {
+  const baaMap = Object.fromEntries(baaArr.map(x => [x.date, x.value]));
+  const dxyMap = Object.fromEntries(dxyArr.map(x => [x.date, x.value]));
+  let lastBaa = null, lastDxy = null;
+  return btcArr.map(({date, btc}) => {
+    if(baaMap[date] != null) lastBaa = baaMap[date];
+    if(dxyMap[date] != null) lastDxy = dxyMap[date];
+    if(lastBaa == null || lastDxy == null || !btc) return null;
+    return { date, baa:lastBaa, btc, dxy:lastDxy, signal:(lastBaa/btc)*lastDxy };
+  }).filter(Boolean);
+}
+
+function filterByDays(data, days) {
+  if(days === 0) return data;
+  const cut = new Date();
+  cut.setDate(cut.getDate() - days);
+  return data.filter(d => d.date >= cut.toISOString().slice(0,10));
+}
+
+// ── Chart ─────────────────────────────────────
+function buildOrUpdateChart(data) {
+  const labels  = data.map(d => d.date);
+  const signals = data.map(d => d.signal);
+  const ctx = document.getElementById('radarChart').getContext('2d');
+
+  if(chart) {
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = signals;
+    chart.update('none');
+    return;
+  }
+
+  const grad = ctx.createLinearGradient(0,0,0,420);
+  grad.addColorStop(0,    'rgba(99,120,255,0.40)');
+  grad.addColorStop(0.55, 'rgba(168,85,247,0.10)');
+  grad.addColorStop(1,    'rgba(99,120,255,0.00)');
+
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets:[{
+      label:'Segnale', data:signals,
+      borderColor:'#6378ff', borderWidth:2,
+      backgroundColor:grad, fill:true,
+      pointRadius:0, pointHoverRadius:5,
+      pointHoverBackgroundColor:'#6378ff',
+      pointHoverBorderColor:'#fff', pointHoverBorderWidth:1.5,
+      tension:0.3
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#0d1220', borderColor:'rgba(99,120,255,0.35)',
+          borderWidth:1, titleColor:'#e8eaff', bodyColor:'#9ca3af', padding:12,
+          titleFont:{family:"'Space Mono',monospace",size:11},
+          bodyFont: {family:"'Space Mono',monospace",size:11},
+          callbacks:{
+            title: items => items[0].label,
+            label: item => {
+              const d = data[item.dataIndex];
+              return [
+                `  Segnale : ${d.signal.toFixed(6)}`,
+                `  BAA10Y  : ${d.baa.toFixed(2)}`,
+                `  BTC     : $${Math.round(d.btc).toLocaleString('it-IT')}`,
+                `  DXY     : ${d.dxy.toFixed(2)}`
+              ];
+            }
+          }
+        }
+      },
+      scales:{
+        x:{ ticks:{color:'#6b7280',font:{family:"'Space Mono',monospace",size:10},maxTicksLimit:10,maxRotation:0}, grid:{color:'rgba(99,120,255,0.07)'}, border:{color:'rgba(99,120,255,0.12)'} },
+        y:{ ticks:{color:'#6b7280',font:{family:"'Space Mono',monospace",size:10},callback:v=>v.toFixed(4)}, grid:{color:'rgba(99,120,255,0.07)'}, border:{color:'rgba(99,120,255,0.12)'} }
+      }
+    }
+  });
+}
+
+function updateStats(data) {
+  if(!data.length) return;
+  const last = data[data.length-1];
+  document.getElementById('val-baa').textContent = fmt(last.baa,2);
+  document.getElementById('val-btc').textContent = '$'+fmt(last.btc,0);
+  document.getElementById('val-dxy').textContent = fmt(last.dxy,2);
+  document.getElementById('val-sig').textContent = last.signal.toFixed(5);
+}
+
+// ── Boot ──────────────────────────────────────
+async function loadData() {
+  document.getElementById('ovSpinner').style.display = '';
+  document.querySelector('.progress-bar-wrap').style.display = '';
+  document.getElementById('overlay').style.display = 'flex';
+  document.getElementById('ovMsg').textContent = 'Avvio...';
+
+  try {
+    const [btcRaw, baaRaw, dxyRaw] = await Promise.all([
+      fetchBTC(), fetchBAA(), fetchDXY()
+    ]);
+
+    setProgress(88, 'Calcolo formula...');
+    allData = mergeData(btcRaw, baaRaw, dxyRaw);
+    if(!allData.length) throw new Error('Nessun punto dati dopo il merge');
+
+    setProgress(100, 'Rendering...');
+    buildOrUpdateChart(filterByDays(allData, activeDays));
+    updateStats(allData);
+    hideOverlay();
+
+    const last = allData[allData.length-1];
+    document.getElementById('data-source-label').textContent =
+      `Aggiornato al ${last.date} · Binance · FRED (BAA10Y + DTWEXBGS)`;
+
+  } catch(err) {
+    console.error('[Radar AI]', err);
+    const isKeyErr = err.message.toLowerCase().includes('400') || err.message.toLowerCase().includes('api key');
+    showError(
+      `${err.message}<br><span style="font-size:0.6rem;color:#4b5563">Controlla la connessione internet.</span>`,
+      isKeyErr
+    );
+    document.getElementById('data-source-label').textContent = 'Errore';
+  }
+}
+
+document.querySelectorAll('.tf-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tf-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    activeDays = parseInt(btn.dataset.days);
+    if(!allData.length || !chart) return;
+    const f = filterByDays(allData, activeDays);
+    chart.data.labels = f.map(d=>d.date);
+    chart.data.datasets[0].data = f.map(d=>d.signal);
+    chart.update();
+  });
+});
+
+if(fredKey) loadData();
+</script>
+</body>
+</html>
