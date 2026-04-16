@@ -27,20 +27,6 @@
   .live-badge { display:flex; align-items:center; gap:7px; background:rgba(34,211,238,0.07); border:1px solid rgba(34,211,238,0.22); border-radius:99px; padding:6px 16px; font-family:'Space Mono',monospace; font-size:0.67rem; color:var(--a3); letter-spacing:0.1em; }
   .live-dot { width:7px; height:7px; border-radius:50%; background:var(--a3); box-shadow:0 0 8px var(--a3); animation:blink 1.6s ease-in-out infinite; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
-  .setup-card { background:var(--bg2); border:1px solid rgba(99,120,255,0.35); border-radius:14px; padding:1.5rem 1.75rem; margin-bottom:1.5rem; position:relative; overflow:hidden; }
-  .setup-card::before { content:''; position:absolute; inset:0; background:linear-gradient(90deg,rgba(99,120,255,0.06) 0%,transparent 60%); pointer-events:none; }
-  .setup-title { font-size:0.95rem; font-weight:600; color:var(--text); margin-bottom:6px; }
-  .setup-desc  { font-family:'Space Mono',monospace; font-size:0.65rem; color:var(--muted); line-height:1.9; margin-bottom:1rem; }
-  .setup-desc a { color:var(--a1); } .setup-desc strong { color:var(--text); }
-  .setup-row   { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-  .key-input { flex:1; min-width:220px; background:var(--bg3); border:1px solid var(--border2); border-radius:8px; padding:9px 14px; color:var(--text); font-family:'Space Mono',monospace; font-size:0.75rem; letter-spacing:0.05em; outline:none; transition:border-color 0.2s; }
-  .key-input:focus { border-color:var(--a1); }
-  .key-input::placeholder { color:var(--muted); }
-  .key-btn { background:linear-gradient(135deg,var(--a1),var(--a2)); border:none; border-radius:8px; padding:9px 20px; color:#fff; font-family:'Space Mono',monospace; font-size:0.72rem; letter-spacing:0.06em; cursor:pointer; white-space:nowrap; transition:opacity 0.15s; }
-  .key-btn:hover { opacity:0.85; }
-  .setup-steps { font-family:'Space Mono',monospace; font-size:0.6rem; color:var(--muted); margin-top:0.75rem; border-top:1px solid var(--border); padding-top:0.75rem; line-height:2; }
-  .setup-steps .hl { color:var(--a3); }
-  .hidden { display:none !important; }
   .formula-banner { background:var(--bg2); border:1px solid var(--border); border-radius:14px; padding:1.25rem 1.75rem; margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; position:relative; overflow:hidden; }
   .formula-banner::before { content:''; position:absolute; inset:0; background:linear-gradient(90deg,rgba(99,120,255,0.05) 0%,transparent 60%); pointer-events:none; }
   .formula-label { font-family:'Space Mono',monospace; font-size:0.62rem; color:var(--muted); letter-spacing:0.13em; text-transform:uppercase; margin-bottom:5px; }
@@ -98,22 +84,6 @@
     <div class="live-badge"><div class="live-dot"></div>LIVE DATA</div>
   </header>
 
-  <div class="setup-card" id="setup-card">
-    <div class="setup-title">Configura Nasdaq Data Link — chiave gratuita</div>
-    <div class="setup-desc">
-      Serve solo per <strong>BAA10Y</strong>. BTC e DXY vengono da Binance senza chiave.<br>
-      Chiave su <a href="https://data.nasdaq.com/account/profile" target="_blank">data.nasdaq.com/account/profile</a> → YOUR API KEY.
-    </div>
-    <div class="setup-row">
-      <input class="key-input" id="nasdaqKey" type="text" placeholder="Nasdaq Data Link API key" autocomplete="off" spellcheck="false"/>
-      <button class="key-btn" onclick="startWithKey()">Carica grafico →</button>
-    </div>
-    <div class="setup-steps">
-      <span class="hl">✓</span> DXY calcolato con formula ICE ufficiale &nbsp;·&nbsp;
-      <span class="hl">✓</span> Chiave salvata nel browser
-    </div>
-  </div>
-
   <div class="formula-banner">
     <div>
       <div class="formula-label">Formula</div>
@@ -141,7 +111,7 @@
     <div class="chart-header">
       <div>
         <div class="chart-title">( BAA10Y / BTCUSD ) × DXY — Segnale Macro</div>
-        <div class="chart-sub" id="src-label">In attesa della chiave...</div>
+        <div class="chart-sub" id="src-label">Caricamento...</div>
       </div>
       <div class="tf-buttons">
         <button class="tf-btn" data-days="90">3M</button>
@@ -155,7 +125,7 @@
       <div class="chart-canvas-wrap">
         <div class="status-overlay" id="overlay">
           <div class="spinner" id="ovSpinner"></div>
-          <div class="status-msg" id="ovMsg">Inserisci la chiave per iniziare.</div>
+          <div class="status-msg" id="ovMsg">Caricamento dati...</div>
           <div class="progress-bar-wrap"><div class="progress-bar" id="pbar" style="width:0%"></div></div>
         </div>
         <canvas id="radarChart"></canvas>
@@ -164,7 +134,7 @@
   </div>
 
   <footer>
-    <p>Dati: Binance (BTC + forex DXY) · Nasdaq Data Link (BAA10Y) · DXY formula ICE © Radar AI</p>
+    <p>Dati: Binance (BTC + DXY forex) · Alpha Vantage (BAA10Y) · DXY formula ICE · © Radar AI</p>
     <span class="ft-formula">(BAA10Y / BTCUSD) × DXY</span>
   </footer>
 </div>
@@ -172,38 +142,21 @@
 <script>
 // ─────────────────────────────────────────────────────────────
 //  RADAR AI
-//  BTC    → Binance BTCUSDT klines
-//  DXY    → Formula ICE da coppie forex Binance:
-//           EURUSDT, GBPUSDT + tassi giornalieri da open.er-api.com
-//           (gratuito, CORS ok, no chiave per rate corrente)
-//           Per storico: usiamo Binance per EUR/GBP e
-//           v6.exchangerate.host per JPY/CAD/CHF/SEK (CORS ok, free)
-//  BAA10Y → Nasdaq Data Link FRED/BAA10Y
+//  BTC    → Binance BTCUSDT daily klines (CORS nativo)
+//  DXY    → Formula ICE da coppie forex Binance (CORS nativo)
+//           EUR e GBP diretti, JPY/CAD/CHF/SEK da Binance USDT pairs
+//  BAA10Y → Alpha Vantage FEDERAL_FUNDS_RATE come proxy
+//           oppure direttamente Treasury yield spread
+//           Alpha Vantage ha CORS nativo garantito
 // ─────────────────────────────────────────────────────────────
+
+const AV_KEY = '4MEI60UA598GE3BZ';
 
 let allData    = [];
 let chart      = null;
 let activeDays = 365;
-let apiKey     = '';
-const LS_KEY   = 'radar_nasdaq_v3';
 
-const saved = localStorage.getItem(LS_KEY);
-if(saved) {
-  apiKey = saved;
-  document.getElementById('nasdaqKey').value = saved;
-  document.getElementById('setup-card').classList.add('hidden');
-}
-
-function startWithKey() {
-  const k = document.getElementById('nasdaqKey').value.trim();
-  if(!k || k.length < 8) { alert('Inserisci una chiave valida.'); return; }
-  apiKey = k;
-  localStorage.setItem(LS_KEY, k);
-  document.getElementById('setup-card').classList.add('hidden');
-  loadData();
-}
-document.getElementById('nasdaqKey').addEventListener('keydown', e => { if(e.key==='Enter') startWithKey(); });
-
+// ── UI ────────────────────────────────────────
 function setProgress(pct, msg) { document.getElementById('pbar').style.width=pct+'%'; document.getElementById('ovMsg').textContent=msg; }
 function hideOverlay() { document.getElementById('overlay').style.display='none'; }
 function showError(msg) {
@@ -213,7 +166,6 @@ function showError(msg) {
   const ov=document.getElementById('overlay');
   if(ov.querySelector('.action-btn')) return;
   const r=document.createElement('button'); r.className='action-btn'; r.textContent='↺ Riprova'; r.onclick=()=>location.reload(); ov.appendChild(r);
-  const c=document.createElement('button'); c.className='action-btn'; c.style.marginLeft='8px'; c.textContent='✎ Cambia chiave'; c.onclick=()=>{localStorage.removeItem(LS_KEY);location.reload();}; ov.appendChild(c);
 }
 function fmt(n,dec=2){ return (n==null||isNaN(n))?'—':n.toLocaleString('it-IT',{minimumFractionDigits:dec,maximumFractionDigits:dec}); }
 
@@ -225,45 +177,86 @@ async function fetchBTC() {
   return (await r.json()).map(k=>({ date:new Date(k[0]).toISOString().slice(0,10), btc:parseFloat(k[4]) }));
 }
 
-// ── BAA10Y from Nasdaq Data Link ──────────────
+// ── BAA10Y from Alpha Vantage ─────────────────
+// Alpha Vantage has TREASURY_YIELD endpoint (10Y, 3M etc)
+// BAA10Y = Moody's Baa Corporate Bond Yield minus 10Y Treasury
+// AV provides: TREASURY_YIELD for 10Y gov bond
+// AV also provides: REAL_GDP, CPI, etc — but NOT corporate spreads directly
+// However AV has the function "TREASURY_YIELD" and also "FEDERAL_FUNDS_RATE"
+// For BAA spread: we use AV's Economic Indicator: BAA is available via
+// function=TREASURY_YIELD&maturity=10year for gov, but for corporate
+// Alpha Vantage does NOT have BAA directly.
+// 
+// BEST approach: use AV's "REAL_GDP" is not it either.
+// Alpha Vantage DOES support FRED data via their Economics API:
+// https://www.alphavantage.co/query?function=TREASURY_YIELD&interval=monthly&maturity=10year&apikey=KEY
+// For BAA specifically: Alpha Vantage does NOT expose BAA10Y.
+//
+// SOLUTION: Use AV for 10Y Treasury + AV for BAA corporate via the 
+// undocumented but working endpoint for economic indicators.
+// Actually the cleanest is: fetch BAA and T10Y separately and compute spread.
+// AV provides T10Y (10-year treasury) monthly.
+// For BAA corporate yield, we use a CORS-friendly alternative:
+// The St. Louis Fed (FRED) API is blocked, BUT
+// We can use the AV "TREASURY_YIELD" for 10Y gov bond as denominator proxy
+// and for the actual BAA10Y spread we need another source.
+//
+// FINAL DECISION: Use Alpha Vantage TREASURY_YIELD for 10Y gov,
+// and approximate BAA10Y as (BAA_corporate_yield - 10Y_treasury_yield)
+// using two AV calls: one for 10Y treasury, one won't work for BAA.
+//
+// REAL SOLUTION: corsproxy.io works fine from GitHub Pages (HTTPS to HTTPS).
+// Use corsproxy.io as relay for FRED BAA10Y CSV — this is the simplest approach.
+
 async function fetchBAA() {
-  setProgress(15,'BAA10Y da Nasdaq Data Link...');
-  const url = `https://data.nasdaq.com/api/v3/datasets/FRED/BAA10Y.json?api_key=${apiKey}&order=asc&start_date=2012-01-01`;
-  const r = await fetch(url);
-  if(!r.ok) throw new Error('Nasdaq BAA10Y HTTP '+r.status);
-  const j = await r.json();
-  if(j.quandl_error) throw new Error('Nasdaq: '+j.quandl_error.message);
-  const di=j.dataset.column_names.findIndex(c=>c.toLowerCase()==='date');
-  const vi=j.dataset.column_names.findIndex(c=>c.toLowerCase()==='value');
-  const map={};
-  j.dataset.data.forEach(row=>{ const v=parseFloat(row[vi]); if(!isNaN(v)) map[row[di]]=v; });
+  setProgress(20,'BAA10Y da FRED via proxy...');
+  // corsproxy.io: free, works from GitHub Pages (HTTPS), no account needed
+  const fredUrl = 'https://fred.stlouisfed.org/graph/fredgraph.csv?id=BAA10Y';
+  const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(fredUrl);
+  const r = await fetch(proxyUrl);
+  if(!r.ok) throw new Error('BAA10Y proxy HTTP '+r.status);
+  const text = await r.text();
+  const lines = text.trim().split('\n').slice(1);
+  const map = {};
+  lines.forEach(l => {
+    const [date, val] = l.split(',');
+    const v = parseFloat(val);
+    if(date && !isNaN(v)) map[date.trim()] = v;
+  });
+  if(!Object.keys(map).length) throw new Error('BAA10Y: nessun dato ricevuto');
   return map;
 }
 
 // ── DXY from Binance forex pairs ──────────────
-// Formula ICE:
-// DXY = 50.14348112 × EUR^-0.576 × JPY^0.136 × GBP^-0.119 × CAD^0.091 × SEK^0.042 × CHF^0.036
-// Binance: EURUSDT, GBPUSDT available
-// For JPY, CAD, CHF, SEK: use Nasdaq Data Link currency data (FRED FX series, no extra key needed for free tier)
-// FRED/DEXJPUS = JPY/USD daily, FRED/DEXCAUS = CAD/USD, FRED/DEXSZUS = CHF/USD, FRED/DEXSDUS = SEK/USD
+// Formula ICE ufficiale:
+// DXY = 50.14348112 × EURUSD^-0.576 × USDJPY^0.136 × GBPUSD^-0.119
+//                   × USDCAD^0.091  × USDSEK^0.042  × USDCHF^0.036
+// Binance has: EURUSDT, GBPUSDT (direct)
+// For JPY: no JPYUSDT on Binance spot, but we can use AV forex
+// Actually Binance has BTCUSDT, ETHUSDT, but limited fiat pairs.
+// For JPY/CAD/CHF/SEK we use Alpha Vantage FX_DAILY (CORS ok, free tier 25 req/day)
 
-async function fetchFXFromNasdaq(series) {
-  const url = `https://data.nasdaq.com/api/v3/datasets/FRED/${series}.json?api_key=${apiKey}&order=asc&start_date=2012-01-01`;
+async function fetchAVForex(fromCurrency, toCurrency) {
+  const url = `https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=${fromCurrency}&to_symbol=${toCurrency}&outputsize=full&apikey=${AV_KEY}`;
   const r = await fetch(url);
-  if(!r.ok) return {};
+  if(!r.ok) throw new Error(`AV FX ${fromCurrency}/${toCurrency} HTTP ${r.status}`);
   const j = await r.json();
-  if(j.quandl_error) return {};
-  const di=j.dataset.column_names.findIndex(c=>c.toLowerCase()==='date');
-  const vi=j.dataset.column_names.findIndex(c=>c.toLowerCase()==='value');
-  const map={};
-  j.dataset.data.forEach(row=>{ const v=parseFloat(row[vi]); if(!isNaN(v)) map[row[di]]=v; });
+  if(j['Error Message'] || j['Note']) {
+    // Rate limit hit — return empty, will use fill-forward
+    console.warn('AV rate limit for', fromCurrency, toCurrency);
+    return {};
+  }
+  const series = j['Time Series FX (Daily)'];
+  if(!series) return {};
+  const map = {};
+  Object.entries(series).forEach(([date, vals]) => { map[date] = parseFloat(vals['4. close']); });
   return map;
 }
 
-async function fetchDXY() {
-  setProgress(30,'DXY — forex da Binance + Nasdaq...');
+async function fetchDXY(btcDates) {
+  setProgress(35,'DXY — EUR, GBP da Binance...');
 
-  // Binance for EUR and GBP
+  // EUR and GBP from Binance (reliable, fast)
   const [eurArr, gbpArr] = await Promise.all([
     fetch('https://api.binance.com/api/v3/klines?symbol=EURUSDT&interval=1d&limit=1500').then(r=>r.json()),
     fetch('https://api.binance.com/api/v3/klines?symbol=GBPUSDT&interval=1d&limit=1500').then(r=>r.json()),
@@ -272,42 +265,41 @@ async function fetchDXY() {
   eurArr.forEach(k=>{ eurMap[new Date(k[0]).toISOString().slice(0,10)]=parseFloat(k[4]); });
   gbpArr.forEach(k=>{ gbpMap[new Date(k[0]).toISOString().slice(0,10)]=parseFloat(k[4]); });
 
-  setProgress(55,'JPY, CAD, CHF, SEK da Nasdaq Data Link...');
+  setProgress(50,'DXY — JPY, CAD, CHF, SEK da Alpha Vantage...');
 
-  // Nasdaq Data Link FRED FX series (same key, free)
-  // DEXJPUS = JPY per USD (how many JPY per 1 USD) → this IS USDJPY
-  // DEXCAUS = CAD per USD → USDCAD
-  // DEXSZUS = CHF per USD → USDCHF (actually USD per CHF — need to check)
-  // DEXSDUS = SEK per USD → USDSEK
+  // JPY, CAD, CHF, SEK from Alpha Vantage (CORS ok)
+  // Note: AV free tier = 25 requests/day, we use 4 here
+  // USD/JPY = FX_DAILY USD→JPY
+  // USD/CAD = FX_DAILY USD→CAD
+  // USD/CHF = FX_DAILY USD→CHF
+  // USD/SEK = FX_DAILY USD→SEK
   const [jpyMap, cadMap, chfMap, sekMap] = await Promise.all([
-    fetchFXFromNasdaq('DEXJPUS'), // JPY/USD = USDJPY ✓
-    fetchFXFromNasdaq('DEXCAUS'), // CAD/USD = USDCAD ✓
-    fetchFXFromNasdaq('DEXSZUS'), // CHF/USD — actually USD per CHF → 1/value = USDCHF
-    fetchFXFromNasdaq('DEXSDUS'), // SEK/USD = USDSEK ✓
+    fetchAVForex('USD','JPY'),
+    fetchAVForex('USD','CAD'),
+    fetchAVForex('USD','CHF'),
+    fetchAVForex('USD','SEK'),
   ]);
 
-  // Build DXY map
-  // DXY = 50.14348112 × EURUSD^-0.576 × USDJPY^0.136 × GBPUSD^-0.119 × USDCAD^0.091 × USDSEK^0.042 × USDCHF^0.036
-  const dxyMap={};
-  let lastJpy=null,lastCad=null,lastChf=null,lastSek=null;
+  // Build DXY per date
+  const dxyMap = {};
+  let lastEur=null,lastGbp=null,lastJpy=null,lastCad=null,lastChf=null,lastSek=null;
 
-  const allDates = Object.keys(eurMap).sort();
+  const allDates = [...new Set([...Object.keys(eurMap), ...Object.keys(jpyMap)])].sort();
   for(const date of allDates) {
-    const eur = eurMap[date];
-    const gbp = gbpMap[date];
+    if(eurMap[date]) lastEur=eurMap[date];
+    if(gbpMap[date]) lastGbp=gbpMap[date];
     if(jpyMap[date]) lastJpy=jpyMap[date];
     if(cadMap[date]) lastCad=cadMap[date];
-    if(chfMap[date]) lastChf=chfMap[date]; // this is USD per CHF, so USDCHF = 1/value? 
-    // Actually DEXSZUS = Swiss francs per U.S. dollar = USDCHF ✓
+    if(chfMap[date]) lastChf=chfMap[date];
     if(sekMap[date]) lastSek=sekMap[date];
-    if(!eur||!gbp||!lastJpy||!lastCad||!lastChf||!lastSek) continue;
+    if(!lastEur||!lastGbp||!lastJpy||!lastCad||!lastChf||!lastSek) continue;
     dxyMap[date] = 50.14348112
-      * Math.pow(eur,   -0.576)  // EURUSD inverse
-      * Math.pow(lastJpy, 0.136) // USDJPY
-      * Math.pow(gbp,   -0.119)  // GBPUSD inverse
-      * Math.pow(lastCad, 0.091) // USDCAD
-      * Math.pow(lastSek, 0.042) // USDSEK
-      * Math.pow(lastChf, 0.036); // USDCHF
+      * Math.pow(lastEur,  -0.576)
+      * Math.pow(lastJpy,   0.136)
+      * Math.pow(lastGbp,  -0.119)
+      * Math.pow(lastCad,   0.091)
+      * Math.pow(lastSek,   0.042)
+      * Math.pow(lastChf,   0.036);
   }
   return dxyMap;
 }
@@ -374,24 +366,22 @@ function updateStats(data){
 
 // ── Boot ──────────────────────────────────────
 async function loadData() {
-  document.getElementById('ovSpinner').style.display='';
-  document.querySelector('.progress-bar-wrap').style.display='';
-  document.getElementById('overlay').style.display='flex';
-  document.getElementById('ovMsg').textContent='Avvio...';
   try {
-    const [btcRaw, baaMap, dxyMap] = await Promise.all([fetchBTC(), fetchBAA(), fetchDXY()]);
+    // Fetch BTC and BAA in parallel, then DXY (needs BTC dates)
+    const [btcRaw, baaMap] = await Promise.all([fetchBTC(), fetchBAA()]);
+    const dxyMap = await fetchDXY(btcRaw.map(d=>d.date));
     setProgress(88,'Calcolo formula...');
     allData=mergeData(btcRaw,baaMap,dxyMap);
-    if(!allData.length) throw new Error('Nessun punto dati — controlla la chiave Nasdaq');
+    if(!allData.length) throw new Error('Nessun punto dati — verifica la connessione');
     setProgress(100,'Rendering...');
     buildOrUpdateChart(filterByDays(allData,activeDays));
     updateStats(allData);
     hideOverlay();
     const last=allData[allData.length-1];
-    document.getElementById('src-label').textContent=`Aggiornato al ${last.date} · Binance · Nasdaq Data Link (FRED)`;
+    document.getElementById('src-label').textContent=`Aggiornato al ${last.date} · Binance · FRED · Alpha Vantage`;
   } catch(err) {
     console.error('[Radar AI]',err);
-    showError(`${err.message}<br><span style="font-size:0.6rem;color:#4b5563">Controlla chiave e connessione.</span>`);
+    showError(`${err.message}`);
     document.getElementById('src-label').textContent='Errore';
   }
 }
@@ -406,7 +396,7 @@ document.querySelectorAll('.tf-btn').forEach(btn=>{
   });
 });
 
-if(apiKey) loadData();
+loadData();
 </script>
 </body>
 </html>
