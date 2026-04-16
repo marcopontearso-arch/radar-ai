@@ -202,22 +202,25 @@ function showError(msg){
 function fmt(n,dec=2){ return (n==null||isNaN(n))?'—':n.toLocaleString('it-IT',{minimumFractionDigits:dec,maximumFractionDigits:dec}); }
 
 // ── Regime detection ──────────────────────────
-function detectRegime(signal, mean, stdDev) {
-  // Segnale alto = stress elevato = Risk-Off (BTC debole, spread alti)
-  // Segnale basso = ambiente favorevole = Risk-On (BTC forte, spread bassi)
-  if(signal > mean + stdDev * 0.3) return 'risk-off';
-  if(signal < mean - stdDev * 0.3) return 'risk-on';
+// Usa media mobile 365 giorni: confronta segnale attuale con media ultimo anno
+function getMovingAverage(data, days) {
+  if(data.length < days) return data.map(d=>d.signal).reduce((a,b)=>a+b,0)/data.length;
+  const recent = data.slice(-days);
+  return recent.map(d=>d.signal).reduce((a,b)=>a+b,0)/recent.length;
+}
+
+function detectRegime(signal, ma365) {
+  const threshold = ma365 * 0.05; // 5% di tolleranza per zona neutrale
+  if(signal > ma365 + threshold) return 'risk-off';
+  if(signal < ma365 - threshold) return 'risk-on';
   return 'neutral';
 }
 
 function updateRegime(data) {
   if(!data.length) return;
-  // Always use ALL historical data for regime reference
-  const signals = allData.map(d => d.signal);
-  const mean = signals.reduce((a,b)=>a+b,0) / signals.length;
-  const stdDev = Math.sqrt(signals.map(s=>(s-mean)**2).reduce((a,b)=>a+b,0)/signals.length);
+  const ma365 = getMovingAverage(allData, 365);
   const last = allData[allData.length-1];
-  const regime = detectRegime(last.signal, mean, stdDev);
+  const regime = detectRegime(last.signal, ma365);
 
   const banner = document.getElementById('regime-banner');
   banner.className = 'regime-banner ' + regime;
@@ -229,7 +232,7 @@ function updateRegime(data) {
   };
   document.getElementById('regime-value').textContent = labels[regime][0];
   document.getElementById('regime-desc').textContent  = labels[regime][1];
-  document.getElementById('val-mean').textContent = mean.toFixed(5);
+  document.getElementById('val-mean').textContent = ma365.toFixed(5);
 }
 
 // ── BTC ───────────────────────────────────────
@@ -326,12 +329,10 @@ function buildOrUpdate(data){
   const labels=data.map(d=>d.date), signals=data.map(d=>d.signal);
   const ctx=document.getElementById('radarChart').getContext('2d');
 
-  // Always use GLOBAL regime (allData), not filtered period
-  const globalSignals = allData.map(d=>d.signal);
-  const mean = globalSignals.reduce((a,b)=>a+b,0)/globalSignals.length;
-  const lastSig = globalSignals[globalSignals.length-1];
-  const stdDev = Math.sqrt(globalSignals.map(s=>(s-mean)**2).reduce((a,b)=>a+b,0)/globalSignals.length);
-  const regime = detectRegime(lastSig, mean, stdDev);
+  // Regime basato su media mobile 365 giorni (allData globale)
+  const ma365 = getMovingAverage(allData, 365);
+  const lastSig = allData[allData.length-1].signal;
+  const regime = detectRegime(lastSig, ma365);
 
   const gradColors = {
     'risk-on':  ['rgba(34,197,94,0.35)',  'rgba(34,197,94,0.05)',  '#22c55e'],
@@ -354,8 +355,8 @@ function buildOrUpdate(data){
   const grad=ctx.createLinearGradient(0,0,0,420);
   grad.addColorStop(0,gc1); grad.addColorStop(1,gc2);
 
-  // Mean line dataset
-  const meanArr = new Array(signals.length).fill(mean);
+  // Linea media mobile 365 giorni
+  const meanArr = new Array(signals.length).fill(ma365);
 
   chart=new Chart(ctx,{
     type:'line',
@@ -456,7 +457,7 @@ document.querySelectorAll('.tf-btn').forEach(btn=>{
     const f=filterByDays(allData,activeDays);
     chart.data.labels=f.map(d=>d.date);
     chart.data.datasets[0].data=f.map(d=>d.signal);
-    chart.data.datasets[1].data=new Array(f.length).fill(allData.map(d=>d.signal).reduce((a,b)=>a+b,0)/allData.length);
+    chart.data.datasets[1].data=new Array(f.length).fill(getMovingAverage(allData,365));
     chart.update();
     updateRegime(allData);
   });
