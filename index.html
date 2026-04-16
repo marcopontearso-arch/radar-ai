@@ -7,63 +7,58 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
-  :root {
-    --bg:#080b12; --bg2:#0d1220; --bg3:#111827;
-    --border:rgba(99,120,255,0.18); --border2:rgba(99,120,255,0.38);
-    --a1:#6378ff; --a2:#a855f7; --a3:#22d3ee;
-    --text:#e8eaff; --muted:#6b7280;
-  }
-  body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; min-height:100vh; overflow-x:hidden; }
-  body::before { content:''; position:fixed; top:-30%; left:-20%; width:70%; height:70%; background:radial-gradient(ellipse,rgba(99,120,255,0.07) 0%,transparent 70%); pointer-events:none; z-index:0; }
-  body::after  { content:''; position:fixed; bottom:-20%; right:-10%; width:60%; height:60%; background:radial-gradient(ellipse,rgba(168,85,247,0.06) 0%,transparent 70%); pointer-events:none; z-index:0; }
-  .wrapper { position:relative; z-index:1; max-width:1400px; margin:0 auto; padding:2rem 2rem 3rem; }
-  header { display:flex; align-items:center; justify-content:space-between; margin-bottom:2.5rem; padding-bottom:1.5rem; border-bottom:1px solid var(--border); }
-  .logo-area { display:flex; align-items:center; gap:1rem; }
-  .logo-icon { width:50px; height:50px; border-radius:14px; background:linear-gradient(135deg,var(--a1),var(--a2)); display:flex; align-items:center; justify-content:center; box-shadow:0 0 28px rgba(99,120,255,0.3),0 0 56px rgba(168,85,247,0.2); flex-shrink:0; }
-  .logo-icon svg { width:28px; height:28px; }
-  .logo-text h1 { font-size:1.6rem; font-weight:800; letter-spacing:0.05em; background:linear-gradient(90deg,#e8eaff 0%,var(--a1) 50%,var(--a2) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; line-height:1.1; }
-  .logo-text span { font-family:'Space Mono',monospace; font-size:0.63rem; color:var(--a1); letter-spacing:0.14em; opacity:0.75; text-transform:uppercase; }
-  .live-badge { display:flex; align-items:center; gap:7px; background:rgba(34,211,238,0.07); border:1px solid rgba(34,211,238,0.22); border-radius:99px; padding:6px 16px; font-family:'Space Mono',monospace; font-size:0.67rem; color:var(--a3); letter-spacing:0.1em; }
-  .live-dot { width:7px; height:7px; border-radius:50%; background:var(--a3); box-shadow:0 0 8px var(--a3); animation:blink 1.6s ease-in-out infinite; }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
-  .formula-banner { background:var(--bg2); border:1px solid var(--border); border-radius:14px; padding:1.25rem 1.75rem; margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; position:relative; overflow:hidden; }
-  .formula-banner::before { content:''; position:absolute; inset:0; background:linear-gradient(90deg,rgba(99,120,255,0.05) 0%,transparent 60%); pointer-events:none; }
-  .formula-label { font-family:'Space Mono',monospace; font-size:0.62rem; color:var(--muted); letter-spacing:0.13em; text-transform:uppercase; margin-bottom:5px; }
-  .formula-expr  { font-family:'Space Mono',monospace; font-size:1.15rem; font-weight:700; letter-spacing:0.04em; }
-  .op{color:var(--a2);} .v1{color:var(--a1);} .v2{color:#f59e0b;} .v3{color:var(--a3);}
-  .formula-components { display:flex; gap:2rem; flex-wrap:wrap; }
-  .comp { display:flex; flex-direction:column; align-items:flex-end; }
-  .comp-label { font-family:'Space Mono',monospace; font-size:0.57rem; letter-spacing:0.1em; color:var(--muted); text-transform:uppercase; margin-bottom:2px; }
-  .comp-name  { font-family:'Space Mono',monospace; font-size:0.78rem; font-weight:700; }
-  .comp-name.c1{color:var(--a1);} .comp-name.c2{color:#f59e0b;} .comp-name.c3{color:var(--a3);}
-  .stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1rem; margin-bottom:1.5rem; }
-  .stat-card { background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:1rem 1.2rem; transition:border-color 0.2s; }
-  .stat-card:hover { border-color:var(--border2); }
-  .s-label { font-family:'Space Mono',monospace; font-size:0.58rem; color:var(--muted); letter-spacing:0.13em; text-transform:uppercase; margin-bottom:7px; }
-  .s-val   { font-family:'Space Mono',monospace; font-size:1.25rem; font-weight:700; line-height:1; }
-  .s-sub   { font-family:'Space Mono',monospace; font-size:0.6rem; color:var(--muted); margin-top:4px; }
-  .chart-wrap { background:var(--bg2); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
-  .chart-header { padding:1.1rem 1.5rem; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem; }
-  .chart-title { font-size:0.88rem; font-weight:600; color:var(--text); }
-  .chart-sub   { font-family:'Space Mono',monospace; font-size:0.58rem; color:var(--muted); margin-top:3px; letter-spacing:0.08em; }
-  .tf-buttons  { display:flex; gap:4px; flex-wrap:wrap; }
-  .tf-btn { background:transparent; border:1px solid var(--border); border-radius:6px; color:var(--muted); font-family:'Space Mono',monospace; font-size:0.62rem; padding:5px 11px; cursor:pointer; letter-spacing:0.06em; transition:all 0.15s; }
-  .tf-btn:hover,.tf-btn.active { background:rgba(99,120,255,0.12); border-color:var(--a1); color:var(--a1); }
-  .chart-body { padding:1.5rem; position:relative; }
-  .chart-canvas-wrap { position:relative; height:420px; }
-  .status-overlay { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0.75rem; background:var(--bg2); border-radius:8px; z-index:10; }
-  .spinner { width:32px; height:32px; border:2px solid rgba(99,120,255,0.15); border-top-color:var(--a1); border-radius:50%; animation:spin 0.8s linear infinite; }
-  @keyframes spin { to{transform:rotate(360deg)} }
-  .status-msg { font-family:'Space Mono',monospace; font-size:0.68rem; color:var(--muted); letter-spacing:0.06em; text-align:center; line-height:1.9; max-width:460px; padding:0 1rem; }
-  .progress-bar-wrap { width:220px; height:3px; background:rgba(99,120,255,0.12); border-radius:99px; overflow:hidden; }
-  .progress-bar { height:100%; border-radius:99px; background:linear-gradient(90deg,var(--a1),var(--a2)); transition:width 0.4s ease; }
-  .action-btn { margin-top:4px; background:transparent; border:1px solid var(--border2); border-radius:8px; color:var(--a1); font-family:'Space Mono',monospace; font-size:0.65rem; padding:7px 18px; cursor:pointer; letter-spacing:0.08em; transition:all 0.15s; }
-  .action-btn:hover { background:rgba(99,120,255,0.12); }
-  footer { margin-top:1.75rem; padding-top:1.25rem; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem; }
-  footer p    { font-family:'Space Mono',monospace; font-size:0.6rem; color:var(--muted); letter-spacing:0.07em; }
-  .ft-formula { font-family:'Space Mono',monospace; font-size:0.6rem; color:var(--a1); letter-spacing:0.07em; opacity:0.65; }
-  @media(max-width:640px){ .wrapper{padding:1rem 1rem 2rem;} .live-badge{display:none;} .formula-components{display:none;} .formula-expr{font-size:0.88rem;} .chart-canvas-wrap{height:300px;} }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{--bg:#080b12;--bg2:#0d1220;--bg3:#111827;--border:rgba(99,120,255,0.18);--border2:rgba(99,120,255,0.38);--a1:#6378ff;--a2:#a855f7;--a3:#22d3ee;--text:#e8eaff;--muted:#6b7280}
+  body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;overflow-x:hidden}
+  body::before{content:'';position:fixed;top:-30%;left:-20%;width:70%;height:70%;background:radial-gradient(ellipse,rgba(99,120,255,0.07) 0%,transparent 70%);pointer-events:none;z-index:0}
+  body::after{content:'';position:fixed;bottom:-20%;right:-10%;width:60%;height:60%;background:radial-gradient(ellipse,rgba(168,85,247,0.06) 0%,transparent 70%);pointer-events:none;z-index:0}
+  .wrapper{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:2rem 2rem 3rem}
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)}
+  .logo-area{display:flex;align-items:center;gap:1rem}
+  .logo-icon{width:50px;height:50px;border-radius:14px;background:linear-gradient(135deg,var(--a1),var(--a2));display:flex;align-items:center;justify-content:center;box-shadow:0 0 28px rgba(99,120,255,0.3),0 0 56px rgba(168,85,247,0.2);flex-shrink:0}
+  .logo-icon svg{width:28px;height:28px}
+  .logo-text h1{font-size:1.6rem;font-weight:800;letter-spacing:0.05em;background:linear-gradient(90deg,#e8eaff 0%,var(--a1) 50%,var(--a2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.1}
+  .logo-text span{font-family:'Space Mono',monospace;font-size:0.63rem;color:var(--a1);letter-spacing:0.14em;opacity:0.75;text-transform:uppercase}
+  .live-badge{display:flex;align-items:center;gap:7px;background:rgba(34,211,238,0.07);border:1px solid rgba(34,211,238,0.22);border-radius:99px;padding:6px 16px;font-family:'Space Mono',monospace;font-size:0.67rem;color:var(--a3);letter-spacing:0.1em}
+  .live-dot{width:7px;height:7px;border-radius:50%;background:var(--a3);box-shadow:0 0 8px var(--a3);animation:blink 1.6s ease-in-out infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.25}}
+  .formula-banner{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:1.25rem 1.75rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;position:relative;overflow:hidden}
+  .formula-banner::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(99,120,255,0.05) 0%,transparent 60%);pointer-events:none}
+  .formula-label{font-family:'Space Mono',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:0.13em;text-transform:uppercase;margin-bottom:5px}
+  .formula-expr{font-family:'Space Mono',monospace;font-size:1.15rem;font-weight:700;letter-spacing:0.04em}
+  .op{color:var(--a2)}.v1{color:var(--a1)}.v2{color:#f59e0b}.v3{color:var(--a3)}
+  .formula-components{display:flex;gap:2rem;flex-wrap:wrap}
+  .comp{display:flex;flex-direction:column;align-items:flex-end}
+  .comp-label{font-family:'Space Mono',monospace;font-size:0.57rem;letter-spacing:0.1em;color:var(--muted);text-transform:uppercase;margin-bottom:2px}
+  .comp-name{font-family:'Space Mono',monospace;font-size:0.78rem;font-weight:700}
+  .comp-name.c1{color:var(--a1)}.comp-name.c2{color:#f59e0b}.comp-name.c3{color:var(--a3)}
+  .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:1.5rem}
+  .stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1rem 1.2rem;transition:border-color 0.2s}
+  .stat-card:hover{border-color:var(--border2)}
+  .s-label{font-family:'Space Mono',monospace;font-size:0.58rem;color:var(--muted);letter-spacing:0.13em;text-transform:uppercase;margin-bottom:7px}
+  .s-val{font-family:'Space Mono',monospace;font-size:1.25rem;font-weight:700;line-height:1}
+  .s-sub{font-family:'Space Mono',monospace;font-size:0.6rem;color:var(--muted);margin-top:4px}
+  .chart-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+  .chart-header{padding:1.1rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem}
+  .chart-title{font-size:0.88rem;font-weight:600;color:var(--text)}
+  .chart-sub{font-family:'Space Mono',monospace;font-size:0.58rem;color:var(--muted);margin-top:3px;letter-spacing:0.08em}
+  .tf-buttons{display:flex;gap:4px;flex-wrap:wrap}
+  .tf-btn{background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-family:'Space Mono',monospace;font-size:0.62rem;padding:5px 11px;cursor:pointer;letter-spacing:0.06em;transition:all 0.15s}
+  .tf-btn:hover,.tf-btn.active{background:rgba(99,120,255,0.12);border-color:var(--a1);color:var(--a1)}
+  .chart-body{padding:1.5rem;position:relative}
+  .chart-canvas-wrap{position:relative;height:420px}
+  .status-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.75rem;background:var(--bg2);border-radius:8px;z-index:10}
+  .spinner{width:32px;height:32px;border:2px solid rgba(99,120,255,0.15);border-top-color:var(--a1);border-radius:50%;animation:spin 0.8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .status-msg{font-family:'Space Mono',monospace;font-size:0.68rem;color:var(--muted);letter-spacing:0.06em;text-align:center;line-height:1.9;max-width:460px;padding:0 1rem}
+  .progress-bar-wrap{width:220px;height:3px;background:rgba(99,120,255,0.12);border-radius:99px;overflow:hidden}
+  .progress-bar{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--a1),var(--a2));transition:width 0.4s ease}
+  .action-btn{margin-top:4px;background:transparent;border:1px solid var(--border2);border-radius:8px;color:var(--a1);font-family:'Space Mono',monospace;font-size:0.65rem;padding:7px 18px;cursor:pointer;letter-spacing:0.08em;transition:all 0.15s}
+  .action-btn:hover{background:rgba(99,120,255,0.12)}
+  footer{margin-top:1.75rem;padding-top:1.25rem;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem}
+  footer p{font-family:'Space Mono',monospace;font-size:0.6rem;color:var(--muted);letter-spacing:0.07em}
+  .ft-formula{font-family:'Space Mono',monospace;font-size:0.6rem;color:var(--a1);letter-spacing:0.07em;opacity:0.65}
+  @media(max-width:640px){.wrapper{padding:1rem 1rem 2rem}.live-badge{display:none}.formula-components{display:none}.formula-expr{font-size:0.88rem}.chart-canvas-wrap{height:300px}}
 </style>
 </head>
 <body>
@@ -73,8 +68,8 @@
       <div class="logo-icon">
         <svg viewBox="0 0 28 28" fill="none">
           <circle cx="14" cy="14" r="11" stroke="white" stroke-width="1" opacity="0.25"/>
-          <circle cx="14" cy="14" r="7"  stroke="white" stroke-width="1" opacity="0.4"/>
-          <circle cx="14" cy="14" r="3"  fill="white" opacity="0.9"/>
+          <circle cx="14" cy="14" r="7" stroke="white" stroke-width="1" opacity="0.4"/>
+          <circle cx="14" cy="14" r="3" fill="white" opacity="0.9"/>
           <line x1="14" y1="14" x2="24.5" y2="5.5" stroke="white" stroke-width="1.8" stroke-linecap="round" opacity="0.9"/>
           <circle cx="22" cy="7" r="1.8" fill="white" opacity="0.75"/>
         </svg>
@@ -102,9 +97,9 @@
 
   <div class="stats-row">
     <div class="stat-card"><div class="s-label">BAA10Y</div><div class="s-val" id="val-baa" style="color:var(--a1)">—</div><div class="s-sub">Moody's Baa Spread</div></div>
-    <div class="stat-card"><div class="s-label">BTCUSD</div><div class="s-val" id="val-btc" style="color:#f59e0b">—</div><div class="s-sub">Bitcoin / USD · Binance</div></div>
-    <div class="stat-card"><div class="s-label">DXY</div><div class="s-val" id="val-dxy" style="color:var(--a3)">—</div><div class="s-sub">Formula ICE · Binance forex</div></div>
-    <div class="stat-card"><div class="s-label">Segnale attuale</div><div class="s-val" id="val-sig" style="color:var(--text)">—</div><div class="s-sub">( BAA10Y / BTC ) × DXY</div></div>
+    <div class="stat-card"><div class="s-label">BTCUSD</div><div class="s-val" id="val-btc" style="color:#f59e0b">—</div><div class="s-sub">Bitcoin · Binance</div></div>
+    <div class="stat-card"><div class="s-label">DXY</div><div class="s-val" id="val-dxy" style="color:var(--a3)">—</div><div class="s-sub">Formula ICE · 6 coppie</div></div>
+    <div class="stat-card"><div class="s-label">Segnale</div><div class="s-val" id="val-sig" style="color:var(--text)">—</div><div class="s-sub">( BAA10Y / BTC ) × DXY</div></div>
   </div>
 
   <div class="chart-wrap">
@@ -134,194 +129,147 @@
   </div>
 
   <footer>
-    <p>Dati: Binance (BTC + DXY forex) · Alpha Vantage (BAA10Y) · DXY formula ICE · © Radar AI</p>
+    <p>Dati: Binance (BTC + DXY) · Alpha Vantage (BAA10Y) · DXY formula ICE ufficiale · © Radar AI</p>
     <span class="ft-formula">(BAA10Y / BTCUSD) × DXY</span>
   </footer>
 </div>
 
 <script>
 // ─────────────────────────────────────────────────────────────
-//  RADAR AI
-//  BTC    → Binance BTCUSDT daily klines (CORS nativo)
-//  DXY    → Formula ICE da coppie forex Binance (CORS nativo)
-//           EUR e GBP diretti, JPY/CAD/CHF/SEK da Binance USDT pairs
-//  BAA10Y → Alpha Vantage FEDERAL_FUNDS_RATE come proxy
-//           oppure direttamente Treasury yield spread
-//           Alpha Vantage ha CORS nativo garantito
+//  RADAR AI — tutte le API hanno CORS nativo, zero proxy
+//
+//  BTC    → Binance BTCUSDT klines
+//  DXY    → Formula ICE: EUR+GBP da Binance, JPY+CAD+CHF+SEK da AV FX_DAILY
+//  BAA10Y → Alpha Vantage: Baa corporate yield (AV economy endpoint)
+//           minus 10Y Treasury yield = BAA10Y spread
 // ─────────────────────────────────────────────────────────────
 
 const AV_KEY = '4MEI60UA598GE3BZ';
+let allData = [], chart = null, activeDays = 365;
 
-let allData    = [];
-let chart      = null;
-let activeDays = 365;
-
-// ── UI ────────────────────────────────────────
-function setProgress(pct, msg) { document.getElementById('pbar').style.width=pct+'%'; document.getElementById('ovMsg').textContent=msg; }
-function hideOverlay() { document.getElementById('overlay').style.display='none'; }
-function showError(msg) {
+function setProgress(pct, msg){ document.getElementById('pbar').style.width=pct+'%'; document.getElementById('ovMsg').textContent=msg; }
+function hideOverlay(){ document.getElementById('overlay').style.display='none'; }
+function showError(msg){
   document.getElementById('ovSpinner').style.display='none';
   document.querySelector('.progress-bar-wrap').style.display='none';
-  document.getElementById('ovMsg').innerHTML=`<span style="font-size:1.3rem">⚠</span><br>${msg}`;
+  document.getElementById('ovMsg').innerHTML='<span style="font-size:1.3rem">⚠</span><br>'+msg;
   const ov=document.getElementById('overlay');
   if(ov.querySelector('.action-btn')) return;
-  const r=document.createElement('button'); r.className='action-btn'; r.textContent='↺ Riprova'; r.onclick=()=>location.reload(); ov.appendChild(r);
+  const b=document.createElement('button'); b.className='action-btn'; b.textContent='↺ Riprova'; b.onclick=()=>location.reload(); ov.appendChild(b);
 }
 function fmt(n,dec=2){ return (n==null||isNaN(n))?'—':n.toLocaleString('it-IT',{minimumFractionDigits:dec,maximumFractionDigits:dec}); }
 
-// ── BTC from Binance ──────────────────────────
-async function fetchBTC() {
+// ── BTC ───────────────────────────────────────
+async function fetchBTC(){
   setProgress(5,'BTC/USD da Binance...');
-  const r = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=1500');
-  if(!r.ok) throw new Error('Binance BTCUSDT HTTP '+r.status);
-  return (await r.json()).map(k=>({ date:new Date(k[0]).toISOString().slice(0,10), btc:parseFloat(k[4]) }));
+  const r=await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=1500');
+  if(!r.ok) throw new Error('Binance BTC HTTP '+r.status);
+  return (await r.json()).map(k=>({date:new Date(k[0]).toISOString().slice(0,10),btc:parseFloat(k[4])}));
 }
 
-// ── BAA10Y from Alpha Vantage ─────────────────
-// Alpha Vantage has TREASURY_YIELD endpoint (10Y, 3M etc)
-// BAA10Y = Moody's Baa Corporate Bond Yield minus 10Y Treasury
-// AV provides: TREASURY_YIELD for 10Y gov bond
-// AV also provides: REAL_GDP, CPI, etc — but NOT corporate spreads directly
-// However AV has the function "TREASURY_YIELD" and also "FEDERAL_FUNDS_RATE"
-// For BAA spread: we use AV's Economic Indicator: BAA is available via
-// function=TREASURY_YIELD&maturity=10year for gov, but for corporate
-// Alpha Vantage does NOT have BAA directly.
-// 
-// BEST approach: use AV's "REAL_GDP" is not it either.
-// Alpha Vantage DOES support FRED data via their Economics API:
-// https://www.alphavantage.co/query?function=TREASURY_YIELD&interval=monthly&maturity=10year&apikey=KEY
-// For BAA specifically: Alpha Vantage does NOT expose BAA10Y.
-//
-// SOLUTION: Use AV for 10Y Treasury + AV for BAA corporate via the 
-// undocumented but working endpoint for economic indicators.
-// Actually the cleanest is: fetch BAA and T10Y separately and compute spread.
-// AV provides T10Y (10-year treasury) monthly.
-// For BAA corporate yield, we use a CORS-friendly alternative:
-// The St. Louis Fed (FRED) API is blocked, BUT
-// We can use the AV "TREASURY_YIELD" for 10Y gov bond as denominator proxy
-// and for the actual BAA10Y spread we need another source.
-//
-// FINAL DECISION: Use Alpha Vantage TREASURY_YIELD for 10Y gov,
-// and approximate BAA10Y as (BAA_corporate_yield - 10Y_treasury_yield)
-// using two AV calls: one for 10Y treasury, one won't work for BAA.
-//
-// REAL SOLUTION: corsproxy.io works fine from GitHub Pages (HTTPS to HTTPS).
-// Use corsproxy.io as relay for FRED BAA10Y CSV — this is the simplest approach.
+// ── BAA10Y — Alpha Vantage ────────────────────
+// AV provides Baa corporate bond yield via TREASURY_YIELD-style endpoint
+// and 10Y gov Treasury. BAA10Y = Baa_yield - T10Y_yield
+async function fetchBAA(){
+  setProgress(15,'BAA10Y da Alpha Vantage...');
 
-async function fetchBAA() {
-  setProgress(20,'BAA10Y da FRED via proxy...');
-  // corsproxy.io: free, works from GitHub Pages (HTTPS), no account needed
-  const fredUrl = 'https://fred.stlouisfed.org/graph/fredgraph.csv?id=BAA10Y';
-  // Try multiple proxies in sequence
-  const proxies = [
-    'https://api.allorigins.win/raw?url=' + encodeURIComponent(fredUrl),
-    'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(fredUrl),
-    'https://corsproxy.io/?' + encodeURIComponent(fredUrl),
-  ];
-  let text = null;
-  for(const url of proxies) {
-    try {
-      const r = await fetch(url);
-      if(r.ok) { text = await r.text(); break; }
-    } catch(_) {}
-  }
-  if(!text) throw new Error('BAA10Y: tutti i proxy hanno fallito');
-  const lines = text.trim().split('\n').slice(1);
+  // Alpha Vantage CORPORATE_BOND_YIELD: monthly Baa corporate yield
+  const [baaRes, t10Res] = await Promise.all([
+    fetch(`https://www.alphavantage.co/query?function=CORPORATE_BOND_YIELD&interval=monthly&apikey=${AV_KEY}`),
+    fetch(`https://www.alphavantage.co/query?function=TREASURY_YIELD&interval=monthly&maturity=10year&apikey=${AV_KEY}`)
+  ]);
+
+  if(!baaRes.ok) throw new Error('AV corporate bond HTTP '+baaRes.status);
+  if(!t10Res.ok) throw new Error('AV treasury yield HTTP '+t10Res.status);
+
+  const baaJson = await baaRes.json();
+  const t10Json = await t10Res.json();
+
+  if(baaJson['Error Message']) throw new Error('AV: '+baaJson['Error Message']);
+  if(baaJson['Note']) throw new Error('AV rate limit raggiunto — riprova tra 1 minuto');
+
+  const baaData = baaJson.data || [];
+  const t10Data = t10Json.data || [];
+
+  // Build T10Y map
+  const t10map = {};
+  t10Data.forEach(d=>{ const v=parseFloat(d.value); if(!isNaN(v)) t10map[d.date]=v; });
+
+  // BAA10Y = Baa corporate - 10Y Treasury
   const map = {};
-  lines.forEach(l => {
-    const [date, val] = l.split(',');
-    const v = parseFloat(val);
-    if(date && !isNaN(v)) map[date.trim()] = v;
+  baaData.forEach(d=>{
+    const baaVal = parseFloat(d.value);
+    // Find closest T10Y date (same month)
+    const month = d.date.slice(0,7);
+    const t10Key = Object.keys(t10map).find(k=>k.startsWith(month));
+    const t10Val = t10Key ? t10map[t10Key] : null;
+    if(!isNaN(baaVal) && t10Val!=null) map[d.date] = baaVal - t10Val;
+    else if(!isNaN(baaVal)) map[d.date] = baaVal; // use raw if no T10Y match
   });
-  if(!Object.keys(map).length) throw new Error('BAA10Y: nessun dato ricevuto');
+
+  if(!Object.keys(map).length) throw new Error('BAA10Y: nessun dato da Alpha Vantage');
   return map;
 }
 
-// ── DXY from Binance forex pairs ──────────────
-// Formula ICE ufficiale:
-// DXY = 50.14348112 × EURUSD^-0.576 × USDJPY^0.136 × GBPUSD^-0.119
-//                   × USDCAD^0.091  × USDSEK^0.042  × USDCHF^0.036
-// Binance has: EURUSDT, GBPUSDT (direct)
-// For JPY: no JPYUSDT on Binance spot, but we can use AV forex
-// Actually Binance has BTCUSDT, ETHUSDT, but limited fiat pairs.
-// For JPY/CAD/CHF/SEK we use Alpha Vantage FX_DAILY (CORS ok, free tier 25 req/day)
-
-async function fetchAVForex(fromCurrency, toCurrency) {
-  const url = `https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=${fromCurrency}&to_symbol=${toCurrency}&outputsize=full&apikey=${AV_KEY}`;
-  const r = await fetch(url);
-  if(!r.ok) throw new Error(`AV FX ${fromCurrency}/${toCurrency} HTTP ${r.status}`);
-  const j = await r.json();
-  if(j['Error Message'] || j['Note']) {
-    // Rate limit hit — return empty, will use fill-forward
-    console.warn('AV rate limit for', fromCurrency, toCurrency);
-    return {};
-  }
-  const series = j['Time Series FX (Daily)'];
-  if(!series) return {};
-  const map = {};
-  Object.entries(series).forEach(([date, vals]) => { map[date] = parseFloat(vals['4. close']); });
-  return map;
-}
-
-async function fetchDXY(btcDates) {
-  setProgress(35,'DXY — EUR, GBP da Binance...');
-
-  // EUR and GBP from Binance (reliable, fast)
-  const [eurArr, gbpArr] = await Promise.all([
+// ── DXY — Binance + Alpha Vantage forex ──────
+async function fetchDXY(){
+  setProgress(40,'DXY — EUR/GBP da Binance...');
+  const [eurArr,gbpArr] = await Promise.all([
     fetch('https://api.binance.com/api/v3/klines?symbol=EURUSDT&interval=1d&limit=1500').then(r=>r.json()),
     fetch('https://api.binance.com/api/v3/klines?symbol=GBPUSDT&interval=1d&limit=1500').then(r=>r.json()),
   ]);
-  const eurMap={}, gbpMap={};
-  eurArr.forEach(k=>{ eurMap[new Date(k[0]).toISOString().slice(0,10)]=parseFloat(k[4]); });
-  gbpArr.forEach(k=>{ gbpMap[new Date(k[0]).toISOString().slice(0,10)]=parseFloat(k[4]); });
+  const eurMap={},gbpMap={};
+  eurArr.forEach(k=>{eurMap[new Date(k[0]).toISOString().slice(0,10)]=parseFloat(k[4]);});
+  gbpArr.forEach(k=>{gbpMap[new Date(k[0]).toISOString().slice(0,10)]=parseFloat(k[4]);});
 
-  setProgress(50,'DXY — JPY, CAD, CHF, SEK da Alpha Vantage...');
+  setProgress(55,'DXY — JPY/CAD/CHF/SEK da Alpha Vantage...');
+  // AV FX_DAILY: full history, CORS nativo
+  async function avFX(from,to){
+    const r=await fetch(`https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=${from}&to_symbol=${to}&outputsize=full&apikey=${AV_KEY}`);
+    if(!r.ok) return {};
+    const j=await r.json();
+    if(j['Error Message']||j['Note']) return {};
+    const series=j['Time Series FX (Daily)']||{};
+    const m={};
+    Object.entries(series).forEach(([d,v])=>{m[d]=parseFloat(v['4. close']);});
+    return m;
+  }
 
-  // JPY, CAD, CHF, SEK from Alpha Vantage (CORS ok)
-  // Note: AV free tier = 25 requests/day, we use 4 here
-  // USD/JPY = FX_DAILY USD→JPY
-  // USD/CAD = FX_DAILY USD→CAD
-  // USD/CHF = FX_DAILY USD→CHF
-  // USD/SEK = FX_DAILY USD→SEK
-  const [jpyMap, cadMap, chfMap, sekMap] = await Promise.all([
-    fetchAVForex('USD','JPY'),
-    fetchAVForex('USD','CAD'),
-    fetchAVForex('USD','CHF'),
-    fetchAVForex('USD','SEK'),
-  ]);
+  // Sequential to avoid AV rate limit (5 calls/min free tier)
+  const jpyMap = await avFX('USD','JPY');
+  const cadMap = await avFX('USD','CAD');
+  const chfMap = await avFX('USD','CHF');
+  const sekMap = await avFX('USD','SEK');
 
-  // Build DXY per date
-  const dxyMap = {};
-  let lastEur=null,lastGbp=null,lastJpy=null,lastCad=null,lastChf=null,lastSek=null;
-
-  const allDates = [...new Set([...Object.keys(eurMap), ...Object.keys(jpyMap)])].sort();
-  for(const date of allDates) {
-    if(eurMap[date]) lastEur=eurMap[date];
-    if(gbpMap[date]) lastGbp=gbpMap[date];
-    if(jpyMap[date]) lastJpy=jpyMap[date];
-    if(cadMap[date]) lastCad=cadMap[date];
-    if(chfMap[date]) lastChf=chfMap[date];
-    if(sekMap[date]) lastSek=sekMap[date];
-    if(!lastEur||!lastGbp||!lastJpy||!lastCad||!lastChf||!lastSek) continue;
-    dxyMap[date] = 50.14348112
-      * Math.pow(lastEur,  -0.576)
-      * Math.pow(lastJpy,   0.136)
-      * Math.pow(lastGbp,  -0.119)
-      * Math.pow(lastCad,   0.091)
-      * Math.pow(lastSek,   0.042)
-      * Math.pow(lastChf,   0.036);
+  setProgress(75,'Calcolo DXY formula ICE...');
+  // DXY = 50.14348112 × EUR^-0.576 × JPY^0.136 × GBP^-0.119 × CAD^0.091 × SEK^0.042 × CHF^0.036
+  const dxyMap={};
+  let lE=null,lG=null,lJ=null,lC=null,lCH=null,lS=null;
+  const dates=[...new Set([...Object.keys(eurMap),...Object.keys(jpyMap)])].sort();
+  for(const d of dates){
+    if(eurMap[d]) lE=eurMap[d];
+    if(gbpMap[d]) lG=gbpMap[d];
+    if(jpyMap[d]) lJ=jpyMap[d];
+    if(cadMap[d]) lC=cadMap[d];
+    if(chfMap[d]) lCH=chfMap[d];
+    if(sekMap[d]) lS=sekMap[d];
+    if(!lE||!lG||!lJ||!lC||!lCH||!lS) continue;
+    dxyMap[d]=50.14348112*Math.pow(lE,-0.576)*Math.pow(lJ,0.136)*Math.pow(lG,-0.119)*Math.pow(lC,0.091)*Math.pow(lS,0.042)*Math.pow(lCH,0.036);
   }
   return dxyMap;
 }
 
 // ── Merge ─────────────────────────────────────
-function mergeData(btcArr, baaMap, dxyMap) {
-  let lastBaa=null, lastDxy=null;
+function mergeData(btcArr,baaMap,dxyMap){
+  let lB=null,lD=null;
   return btcArr.map(({date,btc})=>{
-    if(baaMap[date]!=null) lastBaa=baaMap[date];
-    if(dxyMap[date]!=null) lastDxy=dxyMap[date];
-    if(lastBaa==null||lastDxy==null||!btc) return null;
-    return {date,baa:lastBaa,btc,dxy:lastDxy,signal:(lastBaa/btc)*lastDxy};
+    // BAA is monthly — find match by month prefix
+    const month=date.slice(0,7);
+    const baaKey=Object.keys(baaMap).find(k=>k.startsWith(month));
+    if(baaKey) lB=baaMap[baaKey];
+    if(dxyMap[date]) lD=dxyMap[date];
+    if(lB==null||lD==null||!btc) return null;
+    return {date,baa:lB,btc,dxy:lD,signal:(lB/btc)*lD};
   }).filter(Boolean);
 }
 
@@ -332,12 +280,12 @@ function filterByDays(data,days){
 }
 
 // ── Chart ─────────────────────────────────────
-function buildOrUpdateChart(data) {
-  const labels=data.map(d=>d.date), signals=data.map(d=>d.signal);
+function buildOrUpdate(data){
+  const labels=data.map(d=>d.date),signals=data.map(d=>d.signal);
   const ctx=document.getElementById('radarChart').getContext('2d');
-  if(chart){ chart.data.labels=labels; chart.data.datasets[0].data=signals; chart.update('none'); return; }
+  if(chart){chart.data.labels=labels;chart.data.datasets[0].data=signals;chart.update('none');return;}
   const grad=ctx.createLinearGradient(0,0,0,420);
-  grad.addColorStop(0,'rgba(99,120,255,0.40)'); grad.addColorStop(0.55,'rgba(168,85,247,0.10)'); grad.addColorStop(1,'rgba(99,120,255,0.00)');
+  grad.addColorStop(0,'rgba(99,120,255,0.40)');grad.addColorStop(0.55,'rgba(168,85,247,0.10)');grad.addColorStop(1,'rgba(99,120,255,0.00)');
   chart=new Chart(ctx,{
     type:'line',
     data:{labels,datasets:[{label:'Segnale',data:signals,borderColor:'#6378ff',borderWidth:2,backgroundColor:grad,fill:true,pointRadius:0,pointHoverRadius:5,pointHoverBackgroundColor:'#6378ff',pointHoverBorderColor:'#fff',pointHoverBorderWidth:1.5,tension:0.3}]},
@@ -352,8 +300,8 @@ function buildOrUpdateChart(data) {
           titleFont:{family:"'Space Mono',monospace",size:11},
           bodyFont:{family:"'Space Mono',monospace",size:11},
           callbacks:{
-            title:items=>items[0].label,
-            label:item=>{const d=data[item.dataIndex];return[`  Segnale : ${d.signal.toFixed(6)}`,`  BAA10Y  : ${d.baa.toFixed(2)}`,`  BTC     : $${Math.round(d.btc).toLocaleString('it-IT')}`,`  DXY     : ${d.dxy.toFixed(2)}`];}
+            title:i=>i[0].label,
+            label:i=>{const d=data[i.dataIndex];return[`  Segnale : ${d.signal.toFixed(6)}`,`  BAA10Y  : ${d.baa.toFixed(2)}`,`  BTC     : $${Math.round(d.btc).toLocaleString('it-IT')}`,`  DXY     : ${d.dxy.toFixed(2)}`];}
           }
         }
       },
@@ -367,31 +315,29 @@ function buildOrUpdateChart(data) {
 
 function updateStats(data){
   if(!data.length) return;
-  const last=data[data.length-1];
-  document.getElementById('val-baa').textContent=fmt(last.baa,2);
-  document.getElementById('val-btc').textContent='$'+fmt(last.btc,0);
-  document.getElementById('val-dxy').textContent=fmt(last.dxy,2);
-  document.getElementById('val-sig').textContent=last.signal.toFixed(5);
+  const l=data[data.length-1];
+  document.getElementById('val-baa').textContent=fmt(l.baa,2);
+  document.getElementById('val-btc').textContent='$'+fmt(l.btc,0);
+  document.getElementById('val-dxy').textContent=fmt(l.dxy,2);
+  document.getElementById('val-sig').textContent=l.signal.toFixed(5);
 }
 
 // ── Boot ──────────────────────────────────────
-async function loadData() {
-  try {
-    // Fetch BTC and BAA in parallel, then DXY (needs BTC dates)
-    const [btcRaw, baaMap] = await Promise.all([fetchBTC(), fetchBAA()]);
-    const dxyMap = await fetchDXY(btcRaw.map(d=>d.date));
+async function loadData(){
+  try{
+    const [btcRaw,baaMap,dxyMap]=await Promise.all([fetchBTC(),fetchBAA(),fetchDXY()]);
     setProgress(88,'Calcolo formula...');
     allData=mergeData(btcRaw,baaMap,dxyMap);
-    if(!allData.length) throw new Error('Nessun punto dati — verifica la connessione');
+    if(!allData.length) throw new Error('Nessun punto dati — controlla la connessione');
     setProgress(100,'Rendering...');
-    buildOrUpdateChart(filterByDays(allData,activeDays));
+    buildOrUpdate(filterByDays(allData,activeDays));
     updateStats(allData);
     hideOverlay();
-    const last=allData[allData.length-1];
-    document.getElementById('src-label').textContent=`Aggiornato al ${last.date} · Binance · FRED · Alpha Vantage`;
-  } catch(err) {
+    const l=allData[allData.length-1];
+    document.getElementById('src-label').textContent=`Aggiornato al ${l.date} · Binance · Alpha Vantage`;
+  }catch(err){
     console.error('[Radar AI]',err);
-    showError(`${err.message}`);
+    showError(err.message);
     document.getElementById('src-label').textContent='Errore';
   }
 }
@@ -402,7 +348,9 @@ document.querySelectorAll('.tf-btn').forEach(btn=>{
     btn.classList.add('active'); activeDays=parseInt(btn.dataset.days);
     if(!allData.length||!chart) return;
     const f=filterByDays(allData,activeDays);
-    chart.data.labels=f.map(d=>d.date); chart.data.datasets[0].data=f.map(d=>d.signal); chart.update();
+    chart.data.labels=f.map(d=>d.date);
+    chart.data.datasets[0].data=f.map(d=>d.signal);
+    chart.update();
   });
 });
 
