@@ -296,7 +296,10 @@ function updateStats(data){
 // ── Boot ──────────────────────────────────────
 async function loadData(){
   try{
-    const [btcRaw,baaMap,dxyMap]=await Promise.all([fetchBTC(),fetchBAA(),fetchDXY()]);
+    // Fetch sequentially to avoid overwhelming APIs
+    const btcRaw = await fetchBTC();
+    const baaMap = await fetchBAA();
+    const dxyMap = await fetchDXY();
     setProgress(88,'Calcolo formula...');
     allData=mergeData(btcRaw,baaMap,dxyMap);
     if(!allData.length) throw new Error('Nessun punto dati — controlla la connessione');
@@ -308,8 +311,14 @@ async function loadData(){
     document.getElementById('src-label').textContent=`Aggiornato al ${l.date} · Binance · Alpha Vantage`;
   }catch(err){
     console.error('[Radar AI]',err);
-    showError(err.message);
-    document.getElementById('src-label').textContent='Errore';
+    // Auto-retry once on first error
+    if(!window._retried) {
+      window._retried = true;
+      setTimeout(loadData, 2000);
+    } else {
+      showError(err.message);
+      document.getElementById('src-label').textContent='Errore';
+    }
   }
 }
 
