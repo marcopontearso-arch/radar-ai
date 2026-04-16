@@ -172,13 +172,11 @@ async function fetchBAA(){
   setProgress(15,'BAA10Y da macrosignal.uk...');
   const r = await fetch('https://macrosignal.uk');
   if(!r.ok) throw new Error('BAA10Y Worker HTTP '+r.status);
-  const text = await r.text();
-  const lines = text.trim().split(String.fromCharCode(10)).slice(1);
+  const j = await r.json();
   const map = {};
-  lines.forEach(l => {
-    const [date, val] = l.split(',');
-    const v = parseFloat(val);
-    if(date && !isNaN(v)) map[date.trim()] = v;
+  j.observations.forEach(o => {
+    const v = parseFloat(o.value);
+    if(o.date && !isNaN(v)) map[o.date] = v;
   });
   if(!Object.keys(map).length) throw new Error('BAA10Y: nessun dato ricevuto');
   return map;
@@ -331,3 +329,4 @@ loadData();
 </script>
 </body>
 </html>
+ 
