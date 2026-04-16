@@ -78,7 +78,7 @@
     </div>
     <div class="live-badge"><div class="live-dot"></div>LIVE DATA</div>
   </header>
-
+ 
   <div class="formula-banner">
     <div>
       <div class="formula-label">Formula</div>
@@ -94,14 +94,14 @@
       <div class="comp"><span class="comp-label">Dollar Index</span><span class="comp-name c3">DXY</span></div>
     </div>
   </div>
-
+ 
   <div class="stats-row">
     <div class="stat-card"><div class="s-label">BAA10Y</div><div class="s-val" id="val-baa" style="color:var(--a1)">—</div><div class="s-sub">Moody's Baa Spread</div></div>
     <div class="stat-card"><div class="s-label">BTCUSD</div><div class="s-val" id="val-btc" style="color:#f59e0b">—</div><div class="s-sub">Bitcoin · Binance</div></div>
     <div class="stat-card"><div class="s-label">DXY</div><div class="s-val" id="val-dxy" style="color:var(--a3)">—</div><div class="s-sub">Formula ICE · 6 coppie</div></div>
     <div class="stat-card"><div class="s-label">Segnale</div><div class="s-val" id="val-sig" style="color:var(--text)">—</div><div class="s-sub">( BAA10Y / BTC ) × DXY</div></div>
   </div>
-
+ 
   <div class="chart-wrap">
     <div class="chart-header">
       <div>
@@ -127,13 +127,13 @@
       </div>
     </div>
   </div>
-
+ 
   <footer>
     <p>Dati: Binance (BTC + DXY) · Alpha Vantage (BAA10Y) · DXY formula ICE ufficiale · © Radar AI</p>
     <span class="ft-formula">(BAA10Y / BTCUSD) × DXY</span>
   </footer>
 </div>
-
+ 
 <script>
 // ─────────────────────────────────────────────────────────────
 //  RADAR AI — tutte le API hanno CORS nativo, zero proxy
@@ -143,10 +143,10 @@
 //  BAA10Y → Alpha Vantage: Baa corporate yield (AV economy endpoint)
 //           minus 10Y Treasury yield = BAA10Y spread
 // ─────────────────────────────────────────────────────────────
-
+ 
 const AV_KEY = '4MEI60UA598GE3BZ';
 let allData = [], chart = null, activeDays = 365;
-
+ 
 function setProgress(pct, msg){ document.getElementById('pbar').style.width=pct+'%'; document.getElementById('ovMsg').textContent=msg; }
 function hideOverlay(){ document.getElementById('overlay').style.display='none'; }
 function showError(msg){
@@ -158,7 +158,7 @@ function showError(msg){
   const b=document.createElement('button'); b.className='action-btn'; b.textContent='↺ Riprova'; b.onclick=()=>location.reload(); ov.appendChild(b);
 }
 function fmt(n,dec=2){ return (n==null||isNaN(n))?'—':n.toLocaleString('it-IT',{minimumFractionDigits:dec,maximumFractionDigits:dec}); }
-
+ 
 // ── BTC ───────────────────────────────────────
 async function fetchBTC(){
   setProgress(5,'BTC/USD da Binance...');
@@ -166,51 +166,48 @@ async function fetchBTC(){
   if(!r.ok) throw new Error('Binance BTC HTTP '+r.status);
   return (await r.json()).map(k=>({date:new Date(k[0]).toISOString().slice(0,10),btc:parseFloat(k[4])}));
 }
-
+ 
 // ── BAA10Y — Alpha Vantage ────────────────────
 // AV provides Baa corporate bond yield via TREASURY_YIELD-style endpoint
 // and 10Y gov Treasury. BAA10Y = Baa_yield - T10Y_yield
 async function fetchBAA(){
   setProgress(15,'BAA10Y da Alpha Vantage...');
-
-  // Alpha Vantage CORPORATE_BOND_YIELD: monthly Baa corporate yield
+ 
+  // Alpha Vantage TREASURY_YIELD supports maturity=10year (gov) and maturity=baa (corporate)
+  // BAA10Y spread = Baa corporate yield - 10Y Treasury yield
   const [baaRes, t10Res] = await Promise.all([
-    fetch(`https://www.alphavantage.co/query?function=CORPORATE_BOND_YIELD&interval=monthly&apikey=${AV_KEY}`),
+    fetch(`https://www.alphavantage.co/query?function=TREASURY_YIELD&interval=monthly&maturity=baa&apikey=${AV_KEY}`),
     fetch(`https://www.alphavantage.co/query?function=TREASURY_YIELD&interval=monthly&maturity=10year&apikey=${AV_KEY}`)
   ]);
-
-  if(!baaRes.ok) throw new Error('AV corporate bond HTTP '+baaRes.status);
-  if(!t10Res.ok) throw new Error('AV treasury yield HTTP '+t10Res.status);
-
+ 
+  if(!baaRes.ok) throw new Error('AV Baa yield HTTP '+baaRes.status);
+  if(!t10Res.ok) throw new Error('AV T10Y HTTP '+t10Res.status);
+ 
   const baaJson = await baaRes.json();
   const t10Json = await t10Res.json();
-
-  if(baaJson['Error Message']) throw new Error('AV: '+baaJson['Error Message']);
-  if(baaJson['Note']) throw new Error('AV rate limit raggiunto — riprova tra 1 minuto');
-
+ 
+  if(baaJson['Error Message']) throw new Error('AV Baa: '+baaJson['Error Message']);
+  if(baaJson['Note']) throw new Error('AV rate limit — riprova tra 1 minuto');
+ 
   const baaData = baaJson.data || [];
   const t10Data = t10Json.data || [];
-
-  // Build T10Y map
+ 
   const t10map = {};
   t10Data.forEach(d=>{ const v=parseFloat(d.value); if(!isNaN(v)) t10map[d.date]=v; });
-
-  // BAA10Y = Baa corporate - 10Y Treasury
+ 
   const map = {};
   baaData.forEach(d=>{
     const baaVal = parseFloat(d.value);
-    // Find closest T10Y date (same month)
-    const month = d.date.slice(0,7);
+    const month  = d.date.slice(0,7);
     const t10Key = Object.keys(t10map).find(k=>k.startsWith(month));
     const t10Val = t10Key ? t10map[t10Key] : null;
     if(!isNaN(baaVal) && t10Val!=null) map[d.date] = baaVal - t10Val;
-    else if(!isNaN(baaVal)) map[d.date] = baaVal; // use raw if no T10Y match
   });
-
-  if(!Object.keys(map).length) throw new Error('BAA10Y: nessun dato da Alpha Vantage');
+ 
+  if(!Object.keys(map).length) throw new Error('BAA10Y: nessun dato — controlla la chiave AV');
   return map;
 }
-
+ 
 // ── DXY — Binance + Alpha Vantage forex ──────
 async function fetchDXY(){
   setProgress(40,'DXY — EUR/GBP da Binance...');
@@ -221,7 +218,7 @@ async function fetchDXY(){
   const eurMap={},gbpMap={};
   eurArr.forEach(k=>{eurMap[new Date(k[0]).toISOString().slice(0,10)]=parseFloat(k[4]);});
   gbpArr.forEach(k=>{gbpMap[new Date(k[0]).toISOString().slice(0,10)]=parseFloat(k[4]);});
-
+ 
   setProgress(55,'DXY — JPY/CAD/CHF/SEK da Alpha Vantage...');
   // AV FX_DAILY: full history, CORS nativo
   async function avFX(from,to){
@@ -234,13 +231,13 @@ async function fetchDXY(){
     Object.entries(series).forEach(([d,v])=>{m[d]=parseFloat(v['4. close']);});
     return m;
   }
-
+ 
   // Sequential to avoid AV rate limit (5 calls/min free tier)
   const jpyMap = await avFX('USD','JPY');
   const cadMap = await avFX('USD','CAD');
   const chfMap = await avFX('USD','CHF');
   const sekMap = await avFX('USD','SEK');
-
+ 
   setProgress(75,'Calcolo DXY formula ICE...');
   // DXY = 50.14348112 × EUR^-0.576 × JPY^0.136 × GBP^-0.119 × CAD^0.091 × SEK^0.042 × CHF^0.036
   const dxyMap={};
@@ -258,7 +255,7 @@ async function fetchDXY(){
   }
   return dxyMap;
 }
-
+ 
 // ── Merge ─────────────────────────────────────
 function mergeData(btcArr,baaMap,dxyMap){
   let lB=null,lD=null;
@@ -272,13 +269,13 @@ function mergeData(btcArr,baaMap,dxyMap){
     return {date,baa:lB,btc,dxy:lD,signal:(lB/btc)*lD};
   }).filter(Boolean);
 }
-
+ 
 function filterByDays(data,days){
   if(days===0) return data;
   const cut=new Date(); cut.setDate(cut.getDate()-days);
   return data.filter(d=>d.date>=cut.toISOString().slice(0,10));
 }
-
+ 
 // ── Chart ─────────────────────────────────────
 function buildOrUpdate(data){
   const labels=data.map(d=>d.date),signals=data.map(d=>d.signal);
@@ -312,7 +309,7 @@ function buildOrUpdate(data){
     }
   });
 }
-
+ 
 function updateStats(data){
   if(!data.length) return;
   const l=data[data.length-1];
@@ -321,7 +318,7 @@ function updateStats(data){
   document.getElementById('val-dxy').textContent=fmt(l.dxy,2);
   document.getElementById('val-sig').textContent=l.signal.toFixed(5);
 }
-
+ 
 // ── Boot ──────────────────────────────────────
 async function loadData(){
   try{
@@ -341,7 +338,7 @@ async function loadData(){
     document.getElementById('src-label').textContent='Errore';
   }
 }
-
+ 
 document.querySelectorAll('.tf-btn').forEach(btn=>{
   btn.addEventListener('click',()=>{
     document.querySelectorAll('.tf-btn').forEach(b=>b.classList.remove('active'));
@@ -353,8 +350,9 @@ document.querySelectorAll('.tf-btn').forEach(btn=>{
     chart.update();
   });
 });
-
+ 
 loadData();
 </script>
 </body>
 </html>
+ 
