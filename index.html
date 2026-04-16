@@ -192,108 +192,11 @@ async function fetchBAA(){
 
 // ── DXY — Binance + Alpha Vantage forex ──────
 async function fetchDXY(){
-  setProgress(40,'DXY — EUR/GBP da Binance...');
-  const [eurArr,gbpArr] = await Promise.all([
-    fetch('https://api.binance.com/api/v3/klines?symbol=EURUSDT&interval=1d&limit=1500').then(r=>r.json()),
-    fetch('https://api.binance.com/api/v3/klines?symbol=GBPUSDT&interval=1d&limit=1500').then(r=>r.json()),
-  ]);
-  const eurMap={},gbpMap={};
-  eurArr.forEach(k=>{eurMap[new Date(k[0]).toISOString().slice(0,10)]=parseFloat(k[4]);});
-  gbpArr.forEach(k=>{gbpMap[new Date(k[0]).toISOString().slice(0,10)]=parseFloat(k[4]);});
-
-  setProgress(55,'DXY — JPY/CAD/CHF/SEK da Alpha Vantage...');
-  // AV FX_DAILY: full history, CORS nativo
-  // JPY, CAD, CHF, SEK from Worker (FRED DEXJPUS, DEXCAUS, DEXSZUS, DEXSDUS)
-  const [jpyMap, cadMap, chfMap, sekMap] = await Promise.all([
-    fetchWorkerCSV('jpy'),
-    fetchWorkerCSV('cad'),
-    fetchWorkerCSV('chf'),
-    fetchWorkerCSV('sek'),
-  ]);
-
-  setProgress(75,'Calcolo DXY formula ICE...');
-  // DXY = 50.14348112 × EUR^-0.576 × JPY^0.136 × GBP^-0.119 × CAD^0.091 × SEK^0.042 × CHF^0.036
-  const dxyMap={};
-  let lE=null,lG=null,lJ=null,lC=null,lCH=null,lS=null;
-  const dates=[...new Set([...Object.keys(eurMap),...Object.keys(jpyMap)])].sort();
-  for(const d of dates){
-    if(eurMap[d]) lE=eurMap[d];
-    if(gbpMap[d]) lG=gbpMap[d];
-    if(jpyMap[d]) lJ=jpyMap[d];
-    if(cadMap[d]) lC=cadMap[d];
-    if(chfMap[d]) lCH=chfMap[d];
-    if(sekMap[d]) lS=sekMap[d];
-    if(!lE||!lG||!lJ||!lC||!lCH||!lS) continue;
-    dxyMap[d]=50.14348112*Math.pow(lE,-0.576)*Math.pow(lJ,0.136)*Math.pow(lG,-0.119)*Math.pow(lC,0.091)*Math.pow(lS,0.042)*Math.pow(lCH,0.036);
-  }
-  return dxyMap;
+  setProgress(35,'DXY da macrosignal.uk...');
+  return fetchWorkerCSV('dxy');
 }
 
-// ── Merge ─────────────────────────────────────
-function mergeData(btcArr,baaMap,dxyMap){
-  let lB=null,lD=null;
-  // Sort baaMap keys for fill-forward
-  const baaKeys=Object.keys(baaMap).sort();
-  return btcArr.map(({date,btc})=>{
-    // Fill-forward BAA (monthly) to daily BTC dates
-    const validBaaKey=baaKeys.filter(k=>k<=date).pop();
-    if(validBaaKey) lB=baaMap[validBaaKey];
-    if(dxyMap[date]) lD=dxyMap[date];
-    if(lB==null||lD==null||!btc) return null;
-    return {date,baa:lB,btc,dxy:lD,signal:(lB/btc)*lD};
-  }).filter(Boolean);
-}
 
-function filterByDays(data,days){
-  if(days===0) return data;
-  const cut=new Date(); cut.setDate(cut.getDate()-days);
-  return data.filter(d=>d.date>=cut.toISOString().slice(0,10));
-}
-
-// ── Chart ─────────────────────────────────────
-function buildOrUpdate(data){
-  const labels=data.map(d=>d.date),signals=data.map(d=>d.signal);
-  const ctx=document.getElementById('radarChart').getContext('2d');
-  if(chart){chart.data.labels=labels;chart.data.datasets[0].data=signals;chart.update('none');return;}
-  const grad=ctx.createLinearGradient(0,0,0,420);
-  grad.addColorStop(0,'rgba(99,120,255,0.40)');grad.addColorStop(0.55,'rgba(168,85,247,0.10)');grad.addColorStop(1,'rgba(99,120,255,0.00)');
-  chart=new Chart(ctx,{
-    type:'line',
-    data:{labels,datasets:[{label:'Segnale',data:signals,borderColor:'#6378ff',borderWidth:2,backgroundColor:grad,fill:true,pointRadius:0,pointHoverRadius:5,pointHoverBackgroundColor:'#6378ff',pointHoverBorderColor:'#fff',pointHoverBorderWidth:1.5,tension:0.3}]},
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      interaction:{mode:'index',intersect:false},
-      plugins:{
-        legend:{display:false},
-        tooltip:{
-          backgroundColor:'#0d1220',borderColor:'rgba(99,120,255,0.35)',borderWidth:1,
-          titleColor:'#e8eaff',bodyColor:'#9ca3af',padding:12,
-          titleFont:{family:"'Space Mono',monospace",size:11},
-          bodyFont:{family:"'Space Mono',monospace",size:11},
-          callbacks:{
-            title:i=>i[0].label,
-            label:i=>{const d=data[i.dataIndex];return[`  Segnale : ${d.signal.toFixed(6)}`,`  BAA10Y  : ${d.baa.toFixed(2)}`,`  BTC     : $${Math.round(d.btc).toLocaleString('it-IT')}`,`  DXY     : ${d.dxy.toFixed(2)}`];}
-          }
-        }
-      },
-      scales:{
-        x:{ticks:{color:'#6b7280',font:{family:"'Space Mono',monospace",size:10},maxTicksLimit:10,maxRotation:0},grid:{color:'rgba(99,120,255,0.07)'},border:{color:'rgba(99,120,255,0.12)'}},
-        y:{ticks:{color:'#6b7280',font:{family:"'Space Mono',monospace",size:10},callback:v=>v.toFixed(4)},grid:{color:'rgba(99,120,255,0.07)'},border:{color:'rgba(99,120,255,0.12)'}}
-      }
-    }
-  });
-}
-
-function updateStats(data){
-  if(!data.length) return;
-  const l=data[data.length-1];
-  document.getElementById('val-baa').textContent=fmt(l.baa,2);
-  document.getElementById('val-btc').textContent='$'+fmt(l.btc,0);
-  document.getElementById('val-dxy').textContent=fmt(l.dxy,2);
-  document.getElementById('val-sig').textContent=l.signal.toFixed(5);
-}
-
-// ── Boot ──────────────────────────────────────
 async function loadData(){
   try{
     // Fetch sequentially to avoid overwhelming APIs
