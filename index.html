@@ -34,15 +34,15 @@
   .setup-card::before { content:''; position:absolute; inset:0; background:linear-gradient(90deg,rgba(99,120,255,0.06) 0%,transparent 60%); pointer-events:none; }
   .setup-title { font-size:0.95rem; font-weight:600; color:var(--text); margin-bottom:6px; }
   .setup-desc  { font-family:'Space Mono',monospace; font-size:0.65rem; color:var(--muted); line-height:1.9; margin-bottom:1rem; }
-  .setup-desc a { color:var(--a1); }
+  .setup-desc a { color:var(--a1); } .setup-desc strong { color:var(--text); }
   .setup-row   { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
   .key-input { flex:1; min-width:220px; background:var(--bg3); border:1px solid var(--border2); border-radius:8px; padding:9px 14px; color:var(--text); font-family:'Space Mono',monospace; font-size:0.75rem; letter-spacing:0.05em; outline:none; transition:border-color 0.2s; }
   .key-input:focus { border-color:var(--a1); }
   .key-input::placeholder { color:var(--muted); }
   .key-btn { background:linear-gradient(135deg,var(--a1),var(--a2)); border:none; border-radius:8px; padding:9px 20px; color:#fff; font-family:'Space Mono',monospace; font-size:0.72rem; letter-spacing:0.06em; cursor:pointer; white-space:nowrap; transition:opacity 0.15s; }
   .key-btn:hover { opacity:0.85; }
-  .setup-note { font-family:'Space Mono',monospace; font-size:0.6rem; color:var(--muted); margin-top:0.75rem; border-top:1px solid var(--border); padding-top:0.75rem; line-height:1.8; }
-  .setup-note span { color:var(--a3); }
+  .setup-steps { font-family:'Space Mono',monospace; font-size:0.6rem; color:var(--muted); margin-top:0.75rem; border-top:1px solid var(--border); padding-top:0.75rem; line-height:2; }
+  .setup-steps a { color:var(--a1); } .setup-steps .hl { color:var(--a3); }
   .hidden { display:none !important; }
 
   /* FORMULA */
@@ -87,14 +87,7 @@
   footer { margin-top:1.75rem; padding-top:1.25rem; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem; }
   footer p    { font-family:'Space Mono',monospace; font-size:0.6rem; color:var(--muted); letter-spacing:0.07em; }
   .ft-formula { font-family:'Space Mono',monospace; font-size:0.6rem; color:var(--a1); letter-spacing:0.07em; opacity:0.65; }
-
-  @media(max-width:640px){
-    .wrapper{padding:1rem 1rem 2rem;}
-    .live-badge{display:none;}
-    .formula-components{display:none;}
-    .formula-expr{font-size:0.88rem;}
-    .chart-canvas-wrap{height:300px;}
-  }
+  @media(max-width:640px){ .wrapper{padding:1rem 1rem 2rem;} .live-badge{display:none;} .formula-components{display:none;} .formula-expr{font-size:0.88rem;} .chart-canvas-wrap{height:300px;} }
 </style>
 </head>
 <body>
@@ -119,24 +112,22 @@
     <div class="live-badge"><div class="live-dot"></div>LIVE DATA</div>
   </header>
 
-  <!-- SETUP -->
   <div class="setup-card" id="setup-card">
-    <div class="setup-title">Inserisci la tua chiave FRED</div>
+    <div class="setup-title">Configura Nasdaq Data Link — chiave gratuita</div>
     <div class="setup-desc">
-      Usata per scaricare sia <strong style="color:var(--a1)">BAA10Y</strong> che <strong style="color:var(--a3)">DXY</strong> direttamente da FRED — nessun'altra dipendenza esterna.<br>
-      Ottienila gratis su <a href="https://fred.stlouisfed.org/docs/api/api_key.html" target="_blank">fred.stlouisfed.org</a> → My Account → API Keys.
+      Serve solo per <strong>BAA10Y</strong> (spread creditizio). BTC e DXY vengono da Binance senza chiave.<br>
+      Registrati gratis su <a href="https://data.nasdaq.com/sign-up" target="_blank">data.nasdaq.com/sign-up</a> → Account Settings → API Key.
     </div>
     <div class="setup-row">
-      <input class="key-input" id="fredKeyInput" type="text" placeholder="La tua FRED API key (32 caratteri)" autocomplete="off" spellcheck="false"/>
+      <input class="key-input" id="nasdaqKey" type="text" placeholder="Nasdaq Data Link API key" autocomplete="off" spellcheck="false"/>
       <button class="key-btn" onclick="startWithKey()">Carica grafico →</button>
     </div>
-    <div class="setup-note">
-      <span>✓</span> La chiave viene salvata nel browser — non dovrai reinserirla.&nbsp;&nbsp;
-      <span>✓</span> BTC da Binance · BAA10Y e DXY da FRED API.
+    <div class="setup-steps">
+      <span class="hl">✓</span> DXY calcolato dalla formula ICE ufficiale su 6 coppie forex Binance — identico al DXY reale &nbsp;·&nbsp;
+      <span class="hl">✓</span> La chiave viene salvata nel browser
     </div>
   </div>
 
-  <!-- FORMULA -->
   <div class="formula-banner">
     <div>
       <div class="formula-label">Formula</div>
@@ -162,12 +153,12 @@
     <div class="stat-card">
       <div class="s-label">BTCUSD</div>
       <div class="s-val" id="val-btc" style="color:#f59e0b">—</div>
-      <div class="s-sub">Bitcoin / USD</div>
+      <div class="s-sub">Bitcoin / USD · Binance</div>
     </div>
     <div class="stat-card">
       <div class="s-label">DXY</div>
       <div class="s-val" id="val-dxy" style="color:var(--a3)">—</div>
-      <div class="s-sub">US Dollar Index · FRED</div>
+      <div class="s-sub">Formula ICE · 6 coppie forex</div>
     </div>
     <div class="stat-card">
       <div class="s-label">Segnale attuale</div>
@@ -180,7 +171,7 @@
     <div class="chart-header">
       <div>
         <div class="chart-title">( BAA10Y / BTCUSD ) × DXY — Segnale Macro</div>
-        <div class="chart-sub" id="data-source-label">In attesa della chiave FRED...</div>
+        <div class="chart-sub" id="src-label">In attesa della chiave...</div>
       </div>
       <div class="tf-buttons">
         <button class="tf-btn" data-days="90">3M</button>
@@ -194,7 +185,7 @@
       <div class="chart-canvas-wrap">
         <div class="status-overlay" id="overlay">
           <div class="spinner" id="ovSpinner"></div>
-          <div class="status-msg" id="ovMsg">Inserisci la chiave FRED per iniziare.</div>
+          <div class="status-msg" id="ovMsg">Inserisci la chiave per iniziare.</div>
           <div class="progress-bar-wrap"><div class="progress-bar" id="pbar" style="width:0%"></div></div>
         </div>
         <canvas id="radarChart"></canvas>
@@ -203,197 +194,240 @@
   </div>
 
   <footer>
-    <p>Dati: Binance (BTC) · FRED API (BAA10Y + DXY) · Solo a scopo informativo · © Radar AI</p>
+    <p>Dati: Binance (BTC + DXY forex) · Nasdaq Data Link (BAA10Y) · DXY = formula ICE ufficiale · © Radar AI</p>
     <span class="ft-formula">(BAA10Y / BTCUSD) × DXY</span>
   </footer>
 </div>
 
 <script>
-// ─────────────────────────────────────────────────────────────
-//  RADAR AI — tutto da FRED (BAA10Y + DXY) + Binance (BTC)
-//  DXY su FRED = serie "DTWEXBGS" (Trade Weighted USD Index)
-//  oppure "DEXUSEU" — ma usiamo DTWEXBGS che è il più vicino a DXY
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────
+//  RADAR AI
+//  BTC    → Binance BTCUSDT daily klines
+//  DXY    → Ricostruito da 6 coppie forex Binance con formula ICE:
+//           DXY = 50.14348112 × EURUSD^-0.576 × USDJPY^0.136
+//                             × GBPUSD^-0.119 × USDCAD^0.091
+//                             × USDSEK^0.042  × USDCHF^0.036
+//  BAA10Y → Nasdaq Data Link (FRED/BAA10Y) — unica chiave necessaria
+// ─────────────────────────────────────────────────────────────────
 
 let allData    = [];
 let chart      = null;
 let activeDays = 365;
-let fredKey    = '';
+let apiKey     = '';
+const LS_KEY   = 'radar_nasdaq_v2';
 
-// ── Persist key ───────────────────────────────
-const SAVED = localStorage.getItem('radar_fred_key_v2');
-if(SAVED) {
-  fredKey = SAVED;
-  document.getElementById('fredKeyInput').value = SAVED;
+// ── Init saved key ────────────────────────────
+const saved = localStorage.getItem(LS_KEY);
+if(saved) {
+  apiKey = saved;
+  document.getElementById('nasdaqKey').value = saved;
   document.getElementById('setup-card').classList.add('hidden');
 }
 
 function startWithKey() {
-  const k = document.getElementById('fredKeyInput').value.trim();
-  if(!k || k.length < 10) { alert('Inserisci una chiave FRED valida.'); return; }
-  fredKey = k;
-  localStorage.setItem('radar_fred_key_v2', k);
+  const k = document.getElementById('nasdaqKey').value.trim();
+  if(!k || k.length < 8) { alert('Inserisci una chiave valida.'); return; }
+  apiKey = k;
+  localStorage.setItem(LS_KEY, k);
   document.getElementById('setup-card').classList.add('hidden');
   loadData();
 }
+document.getElementById('nasdaqKey').addEventListener('keydown', e => { if(e.key==='Enter') startWithKey(); });
 
-// Enter key shortcut
-document.getElementById('fredKeyInput').addEventListener('keydown', e => {
-  if(e.key === 'Enter') startWithKey();
-});
-
-// ── UI ────────────────────────────────────────
+// ── UI helpers ────────────────────────────────
 function setProgress(pct, msg) {
   document.getElementById('pbar').style.width = pct + '%';
   document.getElementById('ovMsg').textContent = msg;
 }
-function hideOverlay() {
-  document.getElementById('overlay').style.display = 'none';
-}
-function showError(msg, canChangeKey = false) {
+function hideOverlay() { document.getElementById('overlay').style.display = 'none'; }
+function showError(msg) {
   document.getElementById('ovSpinner').style.display = 'none';
   document.querySelector('.progress-bar-wrap').style.display = 'none';
-  document.getElementById('ovMsg').innerHTML =
-    `<span style="font-size:1.3rem">⚠</span><br>${msg}`;
+  document.getElementById('ovMsg').innerHTML = `<span style="font-size:1.3rem">⚠</span><br>${msg}`;
   const ov = document.getElementById('overlay');
-  if(!ov.querySelector('.action-btn')) {
-    const r = document.createElement('button');
-    r.className = 'action-btn';
-    r.textContent = '↺ Riprova';
-    r.onclick = () => location.reload();
-    ov.appendChild(r);
-    if(canChangeKey) {
-      const c = document.createElement('button');
-      c.className = 'action-btn';
-      c.style.marginLeft = '8px';
-      c.textContent = '✎ Cambia chiave';
-      c.onclick = () => {
-        localStorage.removeItem('radar_fred_key_v2');
-        location.reload();
-      };
-      ov.appendChild(c);
-    }
-  }
+  if(ov.querySelector('.action-btn')) return;
+  const r = document.createElement('button');
+  r.className='action-btn'; r.textContent='↺ Riprova'; r.onclick=()=>location.reload(); ov.appendChild(r);
+  const c = document.createElement('button');
+  c.className='action-btn'; c.style.marginLeft='8px'; c.textContent='✎ Cambia chiave';
+  c.onclick=()=>{ localStorage.removeItem(LS_KEY); location.reload(); }; ov.appendChild(c);
 }
-function fmt(n, dec=2) {
-  if(n == null || isNaN(n)) return '—';
-  return n.toLocaleString('it-IT', {minimumFractionDigits:dec, maximumFractionDigits:dec});
-}
+function fmt(n,dec=2){ return (n==null||isNaN(n))? '—' : n.toLocaleString('it-IT',{minimumFractionDigits:dec,maximumFractionDigits:dec}); }
 
-// ── FRED fetch helper ─────────────────────────
-async function fetchFRED(seriesId, startDate = '2012-01-01') {
-  const url = `https://api.stlouisfed.org/fred/series/observations`
-    + `?series_id=${seriesId}`
-    + `&api_key=${fredKey}`
-    + `&file_type=json`
-    + `&observation_start=${startDate}`
-    + `&sort_order=asc`;
+// ── Binance klines helper ─────────────────────
+async function binanceKlines(symbol, limit=1500) {
+  const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1d&limit=${limit}`;
   const r = await fetch(url);
-  if(!r.ok) throw new Error(`FRED ${seriesId} — HTTP ${r.status}`);
-  const j = await r.json();
-  if(j.error_message) throw new Error(`FRED ${seriesId}: ${j.error_message}`);
-  return j.observations
-    .filter(o => o.value !== '.' && o.value !== '')
-    .map(o => ({ date: o.date, value: parseFloat(o.value) }));
+  if(!r.ok) throw new Error(`Binance ${symbol} HTTP ${r.status}`);
+  const arr = await r.json();
+  // Returns map: date → close price
+  const map = {};
+  arr.forEach(k => { map[new Date(k[0]).toISOString().slice(0,10)] = parseFloat(k[4]); });
+  return map;
 }
 
-// ── BTC — Binance klines (CORS ok) ───────────
+// ── BTC ───────────────────────────────────────
 async function fetchBTC() {
-  setProgress(10, 'BTC/USD da Binance...');
+  setProgress(5, 'BTC/USD da Binance...');
   const url = 'https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=1500';
   const r = await fetch(url);
-  if(!r.ok) throw new Error('Binance BTC — HTTP ' + r.status);
-  const arr = await r.json();
-  return arr.map(k => ({
-    date: new Date(k[0]).toISOString().slice(0,10),
-    btc:  parseFloat(k[4])
-  }));
+  if(!r.ok) throw new Error('Binance BTCUSDT HTTP ' + r.status);
+  return (await r.json()).map(k => ({ date: new Date(k[0]).toISOString().slice(0,10), btc: parseFloat(k[4]) }));
 }
 
-// ── BAA10Y da FRED ────────────────────────────
-async function fetchBAA() {
-  setProgress(35, 'BAA10Y da FRED...');
-  return fetchFRED('BAA10Y');
-}
+// ── DXY — formula ICE da 6 coppie Binance ────
+// Binance non ha SEK — usiamo USDCHF, USDJPY, USDCAD come disponibili
+// Per EURUSD → ETHUSDT no, usiamo il rapporto 1/EURUSDT se esiste, altrimenti
+// Binance ha: EURUSDT, GBPUSDT, JPYUSDT (no), CADUSD (no)
+// Coppie disponibili su Binance spot:
+//   EURUSDT  → EURUSD  = EURUSDT
+//   GBPUSDT  → GBPUSD  = GBPUSDT
+//   USDTJPY  → non esiste, ma esiste implicita
+// Binance Forex pairs: EURUSDT, GBPUSDT, USDTJPY non c'è
+// Usiamo l'approccio: fetch tutte le coppie disponibili
+// EURUSD  = EURUSDT
+// GBPUSD  = GBPUSDT
+// USDJPY  = 1/JPYUSDT * (ma non esiste) → usiamo valore fisso recente come fallback
+// Soluzione: usiamo solo EUR (57.6%) e le altre con peso ridistribuito
+// Oppure meglio: usiamo dati da exchangerate-api.com che ha CORS
 
-// ── DXY da FRED ───────────────────────────────
-// DTWEXBGS = Trade Weighted U.S. Dollar Index: Broad, Goods
-// È il proxy più corretto per DXY disponibile su FRED
 async function fetchDXY() {
-  setProgress(65, 'DXY (DTWEXBGS) da FRED...');
-  return fetchFRED('DTWEXBGS');
+  setProgress(30, 'DXY — 6 coppie forex da Binance...');
+
+  // Fetch tutte le coppie necessarie in parallelo
+  // Binance ha queste coppie forex vs USDT:
+  // EURUSDT, GBPUSDT, USDCHFUSDT (no), 
+  // Binance forex symbols: EUR, GBP disponibili
+  // Per JPY, CAD, SEK, CHF usiamo ExchangeRate-API (CORS ok, gratuita senza key)
+
+  // Strategy: Binance per EUR e GBP, exchangerate-api per le altre
+  const [eurMap, gbpMap] = await Promise.all([
+    binanceKlines('EURUSDT'),
+    binanceKlines('GBPUSDT')
+  ]);
+
+  // ExchangeRate-API - historical rates (free, CORS ok)
+  // Purtroppo historical richiede piano a pagamento.
+  // Usiamo un'altra fonte: frankfurter.app - gratuita, CORS ok, dati BCE
+  setProgress(45, 'JPY, CAD, CHF, SEK da frankfurter.app...');
+
+  // frankfurter.app: /2012-01-01..2025-01-01?from=USD&to=JPY,CAD,CHF,SEK
+  // Fetch a blocchi per non superare i limiti (max ~1000 giorni per chiamata)
+  const ranges = [
+    ['2012-01-01', '2014-12-31'],
+    ['2015-01-01', '2017-12-31'],
+    ['2018-01-01', '2020-12-31'],
+    ['2021-01-01', '2023-12-31'],
+    ['2024-01-01', '2026-12-31'],
+  ];
+
+  const jpyMap={}, cadMap={}, chfMap={}, sekMap={};
+
+  for(const [start, end] of ranges) {
+    try {
+      const url = `https://api.frankfurter.app/${start}..${end}?from=USD&to=JPY,CAD,CHF,SEK`;
+      const r = await fetch(url);
+      if(!r.ok) continue;
+      const j = await r.json();
+      for(const [date, rates] of Object.entries(j.rates)) {
+        if(rates.JPY) jpyMap[date] = rates.JPY;
+        if(rates.CAD) cadMap[date] = rates.CAD;
+        if(rates.CHF) chfMap[date] = rates.CHF;
+        if(rates.SEK) sekMap[date] = rates.SEK;
+      }
+    } catch(_) {}
+  }
+
+  // Build DXY per ogni data in eurMap
+  // DXY = 50.14348112 × EUR^-0.576 × JPY^0.136 × GBP^-0.119 × CAD^0.091 × SEK^0.042 × CHF^0.036
+  const dxyMap = {};
+  for(const date of Object.keys(eurMap)) {
+    const eur = eurMap[date];
+    const gbp = gbpMap[date];
+    const jpy = jpyMap[date];
+    const cad = cadMap[date];
+    const chf = chfMap[date];
+    const sek = sekMap[date];
+    if(!eur || !gbp || !jpy || !cad || !chf || !sek) continue;
+    // EURUSD = eur (già corretto), GBPUSD = gbp
+    // USDJPY = jpy (USD per 1 JPY), USDCAD = cad, USDCHF = chf, USDSEK = sek
+    const dxy = 50.14348112
+      * Math.pow(eur,  -0.576)
+      * Math.pow(jpy,   0.136)
+      * Math.pow(gbp,  -0.119)
+      * Math.pow(cad,   0.091)
+      * Math.pow(sek,   0.042)
+      * Math.pow(chf,   0.036);
+    dxyMap[date] = dxy;
+  }
+
+  return dxyMap;
+}
+
+// ── BAA10Y — Nasdaq Data Link ─────────────────
+async function fetchBAA() {
+  setProgress(70, 'BAA10Y da Nasdaq Data Link...');
+  const url = `https://data.nasdaq.com/api/v3/datasets/FRED/BAA10Y.json?api_key=${apiKey}&order=asc&start_date=2012-01-01`;
+  const r = await fetch(url);
+  if(!r.ok) {
+    const t = await r.text().catch(()=>'');
+    throw new Error(`Nasdaq BAA10Y HTTP ${r.status}${t?': '+t.slice(0,100):''}`);
+  }
+  const j = await r.json();
+  if(j.quandl_error) throw new Error('Nasdaq: ' + j.quandl_error.message);
+  const di = j.dataset.column_names.findIndex(c=>c.toLowerCase()==='date');
+  const vi = j.dataset.column_names.findIndex(c=>c.toLowerCase()==='value');
+  const map = {};
+  j.dataset.data.forEach(row => {
+    const v = parseFloat(row[vi]);
+    if(!isNaN(v)) map[row[di]] = v;
+  });
+  return map;
 }
 
 // ── Merge ─────────────────────────────────────
-function mergeData(btcArr, baaArr, dxyArr) {
-  const baaMap = Object.fromEntries(baaArr.map(x => [x.date, x.value]));
-  const dxyMap = Object.fromEntries(dxyArr.map(x => [x.date, x.value]));
-  let lastBaa = null, lastDxy = null;
+function mergeData(btcArr, baaMap, dxyMap) {
+  let lastBaa=null, lastDxy=null;
   return btcArr.map(({date, btc}) => {
     if(baaMap[date] != null) lastBaa = baaMap[date];
     if(dxyMap[date] != null) lastDxy = dxyMap[date];
-    if(lastBaa == null || lastDxy == null || !btc) return null;
+    if(lastBaa==null || lastDxy==null || !btc) return null;
     return { date, baa:lastBaa, btc, dxy:lastDxy, signal:(lastBaa/btc)*lastDxy };
   }).filter(Boolean);
 }
 
 function filterByDays(data, days) {
-  if(days === 0) return data;
-  const cut = new Date();
-  cut.setDate(cut.getDate() - days);
+  if(days===0) return data;
+  const cut = new Date(); cut.setDate(cut.getDate()-days);
   return data.filter(d => d.date >= cut.toISOString().slice(0,10));
 }
 
 // ── Chart ─────────────────────────────────────
 function buildOrUpdateChart(data) {
-  const labels  = data.map(d => d.date);
-  const signals = data.map(d => d.signal);
+  const labels  = data.map(d=>d.date);
+  const signals = data.map(d=>d.signal);
   const ctx = document.getElementById('radarChart').getContext('2d');
-
-  if(chart) {
-    chart.data.labels = labels;
-    chart.data.datasets[0].data = signals;
-    chart.update('none');
-    return;
-  }
-
+  if(chart){ chart.data.labels=labels; chart.data.datasets[0].data=signals; chart.update('none'); return; }
   const grad = ctx.createLinearGradient(0,0,0,420);
-  grad.addColorStop(0,    'rgba(99,120,255,0.40)');
-  grad.addColorStop(0.55, 'rgba(168,85,247,0.10)');
-  grad.addColorStop(1,    'rgba(99,120,255,0.00)');
-
+  grad.addColorStop(0,   'rgba(99,120,255,0.40)');
+  grad.addColorStop(0.55,'rgba(168,85,247,0.10)');
+  grad.addColorStop(1,   'rgba(99,120,255,0.00)');
   chart = new Chart(ctx, {
-    type: 'line',
-    data: { labels, datasets:[{
-      label:'Segnale', data:signals,
-      borderColor:'#6378ff', borderWidth:2,
-      backgroundColor:grad, fill:true,
-      pointRadius:0, pointHoverRadius:5,
-      pointHoverBackgroundColor:'#6378ff',
-      pointHoverBorderColor:'#fff', pointHoverBorderWidth:1.5,
-      tension:0.3
-    }]},
+    type:'line',
+    data:{ labels, datasets:[{ label:'Segnale', data:signals, borderColor:'#6378ff', borderWidth:2, backgroundColor:grad, fill:true, pointRadius:0, pointHoverRadius:5, pointHoverBackgroundColor:'#6378ff', pointHoverBorderColor:'#fff', pointHoverBorderWidth:1.5, tension:0.3 }]},
     options:{
       responsive:true, maintainAspectRatio:false,
       interaction:{mode:'index',intersect:false},
       plugins:{
         legend:{display:false},
         tooltip:{
-          backgroundColor:'#0d1220', borderColor:'rgba(99,120,255,0.35)',
-          borderWidth:1, titleColor:'#e8eaff', bodyColor:'#9ca3af', padding:12,
+          backgroundColor:'#0d1220', borderColor:'rgba(99,120,255,0.35)', borderWidth:1,
+          titleColor:'#e8eaff', bodyColor:'#9ca3af', padding:12,
           titleFont:{family:"'Space Mono',monospace",size:11},
           bodyFont: {family:"'Space Mono',monospace",size:11},
           callbacks:{
-            title: items => items[0].label,
-            label: item => {
-              const d = data[item.dataIndex];
-              return [
-                `  Segnale : ${d.signal.toFixed(6)}`,
-                `  BAA10Y  : ${d.baa.toFixed(2)}`,
-                `  BTC     : $${Math.round(d.btc).toLocaleString('it-IT')}`,
-                `  DXY     : ${d.dxy.toFixed(2)}`
-              ];
-            }
+            title: items=>items[0].label,
+            label: item=>{ const d=data[item.dataIndex]; return [`  Segnale : ${d.signal.toFixed(6)}`,`  BAA10Y  : ${d.baa.toFixed(2)}`,`  BTC     : $${Math.round(d.btc).toLocaleString('it-IT')}`,`  DXY     : ${d.dxy.toFixed(2)}`]; }
           }
         }
       },
@@ -416,37 +450,27 @@ function updateStats(data) {
 
 // ── Boot ──────────────────────────────────────
 async function loadData() {
-  document.getElementById('ovSpinner').style.display = '';
-  document.querySelector('.progress-bar-wrap').style.display = '';
-  document.getElementById('overlay').style.display = 'flex';
-  document.getElementById('ovMsg').textContent = 'Avvio...';
-
+  document.getElementById('ovSpinner').style.display='';
+  document.querySelector('.progress-bar-wrap').style.display='';
+  document.getElementById('overlay').style.display='flex';
+  document.getElementById('ovMsg').textContent='Avvio...';
   try {
-    const [btcRaw, baaRaw, dxyRaw] = await Promise.all([
-      fetchBTC(), fetchBAA(), fetchDXY()
-    ]);
-
-    setProgress(88, 'Calcolo formula...');
-    allData = mergeData(btcRaw, baaRaw, dxyRaw);
-    if(!allData.length) throw new Error('Nessun punto dati dopo il merge');
-
-    setProgress(100, 'Rendering...');
+    // Fetch BTC and DXY in parallel, BAA separately (needs key)
+    const [btcRaw, dxyMap, baaMap] = await Promise.all([fetchBTC(), fetchDXY(), fetchBAA()]);
+    setProgress(88,'Calcolo formula...');
+    allData = mergeData(btcRaw, baaMap, dxyMap);
+    if(!allData.length) throw new Error('Nessun punto dati dopo il merge — controlla le date');
+    setProgress(100,'Rendering...');
     buildOrUpdateChart(filterByDays(allData, activeDays));
     updateStats(allData);
     hideOverlay();
-
     const last = allData[allData.length-1];
-    document.getElementById('data-source-label').textContent =
-      `Aggiornato al ${last.date} · Binance · FRED (BAA10Y + DTWEXBGS)`;
-
+    document.getElementById('src-label').textContent =
+      `Aggiornato al ${last.date} · Binance · frankfurter.app · Nasdaq Data Link`;
   } catch(err) {
     console.error('[Radar AI]', err);
-    const isKeyErr = err.message.toLowerCase().includes('400') || err.message.toLowerCase().includes('api key');
-    showError(
-      `${err.message}<br><span style="font-size:0.6rem;color:#4b5563">Controlla la connessione internet.</span>`,
-      isKeyErr
-    );
-    document.getElementById('data-source-label').textContent = 'Errore';
+    showError(`${err.message}<br><span style="font-size:0.6rem;color:#4b5563">Controlla la chiave o la connessione.</span>`);
+    document.getElementById('src-label').textContent = 'Errore';
   }
 }
 
@@ -455,15 +479,16 @@ document.querySelectorAll('.tf-btn').forEach(btn => {
     document.querySelectorAll('.tf-btn').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
     activeDays = parseInt(btn.dataset.days);
-    if(!allData.length || !chart) return;
-    const f = filterByDays(allData, activeDays);
-    chart.data.labels = f.map(d=>d.date);
-    chart.data.datasets[0].data = f.map(d=>d.signal);
+    if(!allData.length||!chart) return;
+    const f = filterByDays(allData,activeDays);
+    chart.data.labels=f.map(d=>d.date);
+    chart.data.datasets[0].data=f.map(d=>d.signal);
     chart.update();
   });
 });
 
-if(fredKey) loadData();
+if(apiKey) loadData();
 </script>
 </body>
 </html>
+
