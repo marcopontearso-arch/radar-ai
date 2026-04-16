@@ -197,6 +197,70 @@ async function fetchDXY(){
 }
 
 
+// ── Merge ─────────────────────────────────────
+function mergeData(btcArr,baaMap,dxyMap){
+  const baaKeys=Object.keys(baaMap).sort();
+  const dxyKeys=Object.keys(dxyMap).sort();
+  let lB=null,lD=null;
+  return btcArr.map(({date,btc})=>{
+    const validBaa=baaKeys.filter(k=>k<=date).pop();
+    if(validBaa) lB=baaMap[validBaa];
+    const validDxy=dxyKeys.filter(k=>k<=date).pop();
+    if(validDxy) lD=dxyMap[validDxy];
+    if(lB==null||lD==null||!btc) return null;
+    return {date,baa:lB,btc,dxy:lD,signal:(lB/btc)*lD};
+  }).filter(Boolean);
+}
+
+function filterByDays(data,days){
+  if(days===0) return data;
+  const cut=new Date(); cut.setDate(cut.getDate()-days);
+  return data.filter(d=>d.date>=cut.toISOString().slice(0,10));
+}
+
+function buildOrUpdate(data){
+  const labels=data.map(d=>d.date),signals=data.map(d=>d.signal);
+  const ctx=document.getElementById('radarChart').getContext('2d');
+  if(chart){chart.data.labels=labels;chart.data.datasets[0].data=signals;chart.update('none');return;}
+  const grad=ctx.createLinearGradient(0,0,0,420);
+  grad.addColorStop(0,'rgba(99,120,255,0.40)');grad.addColorStop(0.55,'rgba(168,85,247,0.10)');grad.addColorStop(1,'rgba(99,120,255,0.00)');
+  chart=new Chart(ctx,{
+    type:'line',
+    data:{labels,datasets:[{label:'Segnale',data:signals,borderColor:'#6378ff',borderWidth:2,backgroundColor:grad,fill:true,pointRadius:0,pointHoverRadius:5,pointHoverBackgroundColor:'#6378ff',pointHoverBorderColor:'#fff',pointHoverBorderWidth:1.5,tension:0.3}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#0d1220',borderColor:'rgba(99,120,255,0.35)',borderWidth:1,
+          titleColor:'#e8eaff',bodyColor:'#9ca3af',padding:12,
+          titleFont:{family:"'Space Mono',monospace",size:11},
+          bodyFont:{family:"'Space Mono',monospace",size:11},
+          callbacks:{
+            title:i=>i[0].label,
+            label:i=>{const d=data[i.dataIndex];return[`  Segnale : ${d.signal.toFixed(6)}`,`  BAA10Y  : ${d.baa.toFixed(2)}`,`  BTC     : $${Math.round(d.btc).toLocaleString('it-IT')}`,`  DXY     : ${d.dxy.toFixed(2)}`];}
+          }
+        }
+      },
+      scales:{
+        x:{ticks:{color:'#6b7280',font:{family:"'Space Mono',monospace",size:10},maxTicksLimit:10,maxRotation:0},grid:{color:'rgba(99,120,255,0.07)'},border:{color:'rgba(99,120,255,0.12)'}},
+        y:{ticks:{color:'#6b7280',font:{family:"'Space Mono',monospace",size:10},callback:v=>v.toFixed(4)},grid:{color:'rgba(99,120,255,0.07)'},border:{color:'rgba(99,120,255,0.12)'}}
+      }
+    }
+  });
+}
+
+function updateStats(data){
+  if(!data.length) return;
+  const l=data[data.length-1];
+  document.getElementById('val-baa').textContent=fmt(l.baa,2);
+  document.getElementById('val-btc').textContent='$'+fmt(l.btc,0);
+  document.getElementById('val-dxy').textContent=fmt(l.dxy,2);
+  document.getElementById('val-sig').textContent=l.signal.toFixed(5);
+}
+
+
 async function loadData(){
   try{
     // Fetch sequentially to avoid overwhelming APIs
