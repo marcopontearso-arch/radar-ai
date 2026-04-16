@@ -203,8 +203,10 @@ function fmt(n,dec=2){ return (n==null||isNaN(n))?'—':n.toLocaleString('it-IT'
 
 // ── Regime detection ──────────────────────────
 function detectRegime(signal, mean, stdDev) {
-  if(signal > mean + stdDev * 0.5) return 'risk-off';
-  if(signal < mean - stdDev * 0.5) return 'risk-on';
+  // Segnale alto = stress elevato = Risk-Off (BTC debole, spread alti)
+  // Segnale basso = ambiente favorevole = Risk-On (BTC forte, spread bassi)
+  if(signal > mean + stdDev * 0.3) return 'risk-off';
+  if(signal < mean - stdDev * 0.3) return 'risk-on';
   return 'neutral';
 }
 
